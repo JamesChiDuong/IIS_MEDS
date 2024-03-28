@@ -24,11 +24,11 @@ objs = $(addsuffix .o,$(1))
 
 -include targets.mk
 
-ifeq (,$(wildcard $(SRCDIR)/ref/hal/$(PLATFORM).mk))
+ifeq (,$(wildcard $(SRCDIR)/hal/$(PLATFORM).mk))
 $(error Unknown platform!)
 endif
 
-include ref/hal/$(PLATFORM).mk
+include hal/$(PLATFORM).mk
 
 RETAINED_VARS += PLATFORM
 
@@ -66,18 +66,13 @@ CFLAGS += -flto
 LDFLAGS += -flto
 endif
 
-PARAM = toy
 ################
 # Common Flags #
 ################
 
 CPPFLAGS += \
-	-D$(PARAM) \
-	-I$(SRCDIR)/ref/hal \
-	-I$(SRCDIR)/ref/include \
-	-I$(SRCDIR)/ref/include/NIST  \
-	-I/usr/include \
-	-I/usr/include/x86_64-linux-gnu
+	-I$(SRCDIR)/hal \
+	-I$(SRCDIR)/include
 
 CFLAGS += \
 	-Wall -Wextra -Wshadow \
@@ -85,15 +80,10 @@ CFLAGS += \
 	-fno-common \
 	-ffunction-sections \
 	-fdata-sections \
-	-D$(PARAM) \
 	$(CPPFLAGS)
 
 LDFLAGS += \
-	-Wl,--gc-sections \
-	-L/usr/include \
-	-L/usr/lib \
-	-INIST\
-	-D$(PARAM)
+	-Wl,--gc-sections
 
 HOST_CPPFLAGS +=
 
@@ -116,7 +106,7 @@ _ELFNAME_%.o:
 %.elf: $(LINKDEPS) _ELFNAME_%.elf.o
 	@echo "  LD      $@"
 	$(Q)[ -d $(@D) ] || mkdir -p $(@D)
-	$(Q)$(LD) $(LDFLAGS) -o  $@   $(LIBHAL_SRC_BUILD_OBJ) $(filter %.o,$^)   $(LDLIBS)
+	$(Q)$(LD) $(LDFLAGS) -o $@ $(filter %.o,$^) $(LDLIBS)
 
 %.a:
 	@echo "  AR      $@"
@@ -136,22 +126,22 @@ _ELFNAME_%.o:
 %.c.o: %.c
 	@echo "  CC      $@"
 	$(Q)[ -d $(@D) ] || mkdir -p $(@D)
-	$(Q)$(CC)  -c -o $@  $(CFLAGS) $< 
+	$(Q)$(CC) -c -o $@ $(CFLAGS) $<
 
 %.c.S: %.c
 	@echo "  CC      $@"
 	$(Q)[ -d $(@D) ] || mkdir -p $(@D)
-	$(Q)$(CC) -S -o $@  $(CFLAGS) $<
+	$(Q)$(CC) -S -o $@ $(CFLAGS) $<
 
 %.c.i: %.c
 	@echo "  CC      $@"
 	$(Q)[ -d $(@D) ] || mkdir -p $(@D)
-	$(Q)$(CC) -E -o $@ $(CFLAGS) $< 
+	$(Q)$(CC) -E -o $@ $(CFLAGS) $<
 
 %.S.o: %.S
 	@echo "  AS      $@"
 	$(Q)[ -d $(@D) ] || mkdir -p $(@D)
-	$(Q)$(CC) -c -o $@ $(CFLAGS) $< 
+	$(Q)$(CC) -c -o $@ $(CFLAGS) $<
 
 ##############
 # Host Rules #
