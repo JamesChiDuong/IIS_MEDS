@@ -15,7 +15,7 @@ include config.mk
 # additional dependencies for your the target TARGETNAME.elf file (just
 # define the dependencies, a generic rule for .elf target exists in
 # config.mk).
-DEMO_SRC = test.c
+DEMO_SRC = ref/test.c
 ifeq ($(TARGET),stm32f4)
   DEMO_SRC += demo.S
 endif
