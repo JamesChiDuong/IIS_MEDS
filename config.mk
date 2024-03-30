@@ -92,6 +92,7 @@ LDFLAGS += \
 	-Wl,--gc-sections \
 	-L/usr/include \
 	-L/usr/lib \
+	-lerr\
 	-INIST\
 	-D$(PARAM)
 
