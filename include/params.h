@@ -14,7 +14,6 @@
   #define GFq_t uint16_t
   #define GFq_bits 12
   #define GFq_bytes 2
-  #define GFq_fmt "%4u"
 
   #define MEDS_m 14
   #define MEDS_n 14
@@ -51,7 +50,6 @@
   #define GFq_t uint16_t
   #define GFq_bits 12
   #define GFq_bytes 2
-  #define GFq_fmt "%4u"
 
   #define MEDS_m 14
   #define MEDS_n 14
@@ -88,7 +86,6 @@
   #define GFq_t uint16_t
   #define GFq_bits 12
   #define GFq_bytes 2
-  #define GFq_fmt "%4u"
 
   #define MEDS_m 22
   #define MEDS_n 22
@@ -125,7 +122,6 @@
   #define GFq_t uint16_t
   #define GFq_bits 12
   #define GFq_bytes 2
-  #define GFq_fmt "%4u"
 
   #define MEDS_m 22
   #define MEDS_n 22
@@ -162,7 +158,6 @@
   #define GFq_t uint16_t
   #define GFq_bits 11
   #define GFq_bytes 2
-  #define GFq_fmt "%4u"
 
   #define MEDS_m 30
   #define MEDS_n 30
@@ -199,7 +194,6 @@
   #define GFq_t uint16_t
   #define GFq_bits 11
   #define GFq_bytes 2
-  #define GFq_fmt "%4u"
 
   #define MEDS_m 30
   #define MEDS_n 30
@@ -232,32 +226,31 @@
   #define MEDS_st_seed_bytes 16
   #define MEDS_st_salt_bytes 32
 
-  #define MEDS_p 13
-  #define GFq_t uint8_t
-  #define GFq_bits 4
-  #define GFq_bytes 1
-  #define GFq_fmt "%2u"
+  #define MEDS_p 8191
+  #define GFq_t uint16_t
+  #define GFq_bits 13
+  #define GFq_bytes 2
 
-  #define MEDS_m 4
-  #define MEDS_n 4
-  #define MEDS_k 4
+  #define MEDS_m 10
+  #define MEDS_n 10
+  #define MEDS_k 10
 
-  #define MEDS_s 2
-  #define MEDS_t 4
-  #define MEDS_w 2
+  #define MEDS_s 4
+  #define MEDS_t 16
+  #define MEDS_w 6
 
-  #define MEDS_seed_tree_height 2
-  #define SEED_TREE_size 7
-  #define MEDS_max_path_len 2
+  #define MEDS_seed_tree_height 4
+  #define SEED_TREE_size 31
+  #define MEDS_max_path_len 8
 
-  #define MEDS_t_mask 0x00000003
+  #define MEDS_t_mask 0x0000000F
   #define MEDS_t_bytes 1
 
-  #define MEDS_s_mask 0x00000001
+  #define MEDS_s_mask 0x00000003
 
-  #define MEDS_PK_BYTES 46
-  #define MEDS_SK_BYTES 80
-  #define MEDS_SIG_BYTES 112
+  #define MEDS_PK_BYTES 3593
+  #define MEDS_SK_BYTES 1042
+  #define MEDS_SIG_BYTES 2132
 #endif
 
 #endif

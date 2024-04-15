@@ -2,28 +2,39 @@ SHELL = sh -xv
 
 ifdef SRCDIR
 
+FILE = KAT_test_Serial_IO
 VPATH = $(SRCDIR)
 
+ROOT_PATH := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 # Add your targets here
-TARGETS = test.hex
+TARGETS = $(FILE).hex
 
-all: $(TARGETS)
+PARAM_OBJ = toy
 
+all: params.h $(TARGETS) run
 include config.mk
 
+params.h:
+	python $(ROOT_PATH)/include/params.py -p > $(ROOT_PATH)/include/params.h
+	python $(ROOT_PATH)/include/params.py -a $(PARAM_OBJ) > $(ROOT_PATH)/include/api.h
+
+run:
+	@echo "Run the program"
+	+@./$(FILE).elf
 # For each target define a TARGETNAME_SRC, TARGETNAME_OBJ and define any
 # additional dependencies for your the target TARGETNAME.elf file (just
 # define the dependencies, a generic rule for .elf target exists in
 # config.mk).
-TEST_SRC = ref/test.c ref/meds.c ref/matrixmod.c ref/seed.c ref/util.c ref/bitstream.c ref/randombytes.c ref/osfreq.c ref/fips202.c
+TEST_SRC = ref/$(FILE).c ref/meds.c ref/util.c ref/seed.c ref/osfreq.c ref/fips202.c ref/matrixmod.c ref/bitstream.c ref/randombytes.c  
 ifeq ($(TARGET),stm32f4)
   TEST_SRC += 
 endif
 TEST_OBJ = $(call objs,$(TEST_SRC))
-test.elf: $(TEST_OBJ) libhal.a
+$(FILE).elf: $(TEST_OBJ) libhal.a
 
-CFLAGS += -DMEDS9923
+#CFLAGS += -DMEDS9923
 
+CFLAGS += -D$(PARAM_OBJ)
 LDLIBS += -lssl \
           -lcrypto
 
@@ -44,8 +55,6 @@ else
 .SUFFIXES:
 
 OBJDIR := build
-
-.PHONY: $(OBJDIR)
 $(OBJDIR): %:
 	+@[ -d $@ ] || mkdir -p $@
 	+@$(MAKE) --no-print-directory -r -I$(CURDIR) -C $@ -f $(CURDIR)/Makefile SRCDIR=$(CURDIR) $(MAKECMDGOALS)

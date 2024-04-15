@@ -10,7 +10,7 @@ debug:
 	diff /tmp/c.out /tmp/sage.out | head -n 10
 
 KAT: meds.py
-	make -C ../ref KAT PARAM=$(PARAM)
+	make -C ../ KAT PARAM=$(PARAM)
 	./KAT_check.sage ../ref/PQCsignKAT_$(PARAM).rsp $(PARAM)
 
 KAT_ALL:
