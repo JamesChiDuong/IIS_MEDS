@@ -3,6 +3,10 @@
         "*.tcc": "c",
         "array": "c",
         "string": "c",
-        "string_view": "c"
+        "string_view": "c",
+        "conf.h": "c",
+        "evp.h": "c",
+        "err.h": "c",
+        "aes.h": "c"
     }
 }

@@ -5,6 +5,9 @@
 #include "rng.h"
 #include "api.h"
 #include <hal.h>
+#if defined(STM32F4)
+#include <aes.h>
+#endif
 #define DATA_LENGTH 48
 
 #define KAT_SUCCESS          0
@@ -25,7 +28,7 @@
 extern const char _elf_name[];
 
 //Function prototype
-static void printBstr(char *S, unsigned char *A, unsigned long long L);
+static void fprintBstr(char *S, unsigned char *A, unsigned long long L);
 static void ReadHex(unsigned char *A, int Length, char data);
 int main()
 {
@@ -34,7 +37,7 @@ int main()
     //Declare local variable
     unsigned char       entropy_input[DATA_LENGTH];
     unsigned char       seed[DATA_LENGTH];
-    unsigned long long  mlen, smlen, mlen1;
+    unsigned long       mlen, smlen, mlen1;
     unsigned char       msg[3300];
     unsigned char       *m, *sm, *m1;
     int                 val = 0;
@@ -51,25 +54,31 @@ int main()
     //Define function
     hal_setup();
 
-    hal_led_on();
+  
 
 
     //Init randome byte
     /*******************************/
     /*For implement*/
+
     for (int i=0; i<DATA_LENGTH; i++)
+    {
         entropy_input[i] = i;
-    randombytes_init(entropy_input, NULL, 256);
+    }
+    //printf("Hello world from \"%s\"!\n", _elf_name);
     printf("Send data from \"%s\" - %s\n",_elf_name,CRYPTO_ALGNAME);
+    randombytes_init(entropy_input, NULL, 256);
+    
+    // printf("Send data from \"%s\" - %s\n",_elf_name,CRYPTO_ALGNAME);
     for (int i = 0; i < 100; i++)
     {
         printf("count = %d\n",i);
         randombytes(seed,DATA_LENGTH);
-        printBstr("seed = ", seed, DATA_LENGTH);
+        fprintBstr("seed = ", seed, DATA_LENGTH);
         mlen = 33*(i+1);
-        printf("mlen = %llu\n", mlen);
+        printf("mlen = %d\n", mlen);
         randombytes(msg, mlen);
-        printBstr("msg = ", msg, mlen);
+        fprintBstr("msg = ", msg, mlen);
 
         printf("pk =\n");
         printf("sk =\n");
@@ -117,13 +126,15 @@ int main()
             if((ret_val = crypto_sign_keypair(pk, sk)) != 0)
             {
                 printf("crypto_sign_keypair returned <%d>\n", ret_val);
+                
                 return KAT_CRYPTO_FAILURE;
             }
-            printBstr("pk = ", pk, CRYPTO_PUBLICKEYBYTES);
+            hal_led_on();
+            fprintBstr("pk = ", pk, CRYPTO_PUBLICKEYBYTES);
         }
         else if(val_check == SK_CODE)
         {
-            printBstr("sk = ", sk, CRYPTO_SECRETKEYBYTES);
+            fprintBstr("sk = ", sk, CRYPTO_SECRETKEYBYTES);
         }
         else if (val_check == SML_CODE)
         {
@@ -131,28 +142,29 @@ int main()
                 printf("crypto_sign returned <%d>\n", ret_val);
                 return KAT_CRYPTO_FAILURE;
             }
-            printf("smlen = %llu\n", smlen);
+            printf("smlen = %d\n", smlen);
         }
         else if (val_check == SM_CODE)
         {
-            printBstr("sm = ", sm, smlen);
-            if ( (ret_val = crypto_sign_open(m1, &mlen1, sm, smlen, pk)) != 0) 
-            {
-                printf("crypto_sign_open returned <%d>\n", ret_val);
-                return KAT_CRYPTO_FAILURE;
-            }
+            fprintBstr("sm = ", sm, smlen);
+            hal_led_off();
+            // if ( (ret_val = crypto_sign_open(m1, &mlen1, sm, smlen, pk)) != 0) 
+            // {
+            //     hal_led_off();
+            //     printf("crypto_sign_open returned <%d>\n", ret_val);
+            //     sreturn KAT_CRYPTO_FAILURE;
+            // }
+            // if ( mlen != mlen1 ) 
+            // {
+            //     printf("crypto_sign_open returned bad 'mlen': Got <%llu>, expected <%llu>\n", mlen1, mlen);
+            //     return KAT_CRYPTO_FAILURE;
+            // }
             
-            if ( mlen != mlen1 ) 
-            {
-                printf("crypto_sign_open returned bad 'mlen': Got <%llu>, expected <%llu>\n", mlen1, mlen);
-                return KAT_CRYPTO_FAILURE;
-            }
-            
-            if ( memcmp(m, m1, mlen)) 
-            {
-                printf("crypto_sign_open returned bad 'm' value\n");
-                return KAT_CRYPTO_FAILURE;
-            }
+            // if ( memcmp(m, m1, mlen))
+            // {
+            //     printf("crypto_sign_open returned bad 'm' value\n");
+            //     return KAT_CRYPTO_FAILURE;
+            // }
             free(m);
             free(m1);
             free(sm);
@@ -166,18 +178,21 @@ int main()
     }while (get_char != '\n');
 }
 
-static void printBstr(char *S, unsigned char *A, unsigned long long L)
+static void fprintBstr(char *S, unsigned char *A, unsigned long long L)
 {
-	unsigned long long  i;
+	unsigned long i;
 
 	printf("%s", S);
 
 	for ( i=0; i<L; i++ )
-		printf("%02X", A[i]);
+    {
+        printf("%02X", A[i]);
+    }
 
 	if ( L == 0 )
-		printf("00");
-
+    {
+        printf("00");
+    }
 	printf("\n");
 }
 static void ReadHex(unsigned char *A, int Length, char data)

@@ -9,7 +9,7 @@ ROOT_PATH := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 # Add your targets here
 TARGETS = $(FILE).hex
 
-PARAM_OBJ = toy
+PARAM_OBJ = MEDS13220
 
 all: params.h $(TARGETS) run
 include config.mk
@@ -25,22 +25,26 @@ run:
 # additional dependencies for your the target TARGETNAME.elf file (just
 # define the dependencies, a generic rule for .elf target exists in
 # config.mk).
-TEST_SRC = ref/$(FILE).c ref/meds.c ref/util.c ref/seed.c ref/osfreq.c ref/fips202.c ref/matrixmod.c ref/bitstream.c ref/randombytes.c  
+TEST_SRC = ref/$(FILE).c ref/meds.c ref/util.c ref/seed.c ref/osfreq.c ref/fips202.c ref/matrixmod.c ref/bitstream.c ref/randombytes.c include/pqm_common/aes.c
 ifeq ($(TARGET),stm32f4)
-  TEST_SRC += 
+#   TEST_SRC += include/pqm_common/aes.c
+  TEST_SRC += 	$(SRCDIR)/include/pqm_common/aes-encrypt.S \
+  				$(SRCDIR)/include/pqm_common/demo.S \
+				$(SRCDIR)/include/pqm_common/aes-keyschedule.S
+else
+  LDLIBS += -lssl \
+          -lcrypto
 endif
 TEST_OBJ = $(call objs,$(TEST_SRC))
 $(FILE).elf: $(TEST_OBJ) libhal.a
 
-#CFLAGS += -DMEDS9923
-
 CFLAGS += -D$(PARAM_OBJ)
-LDLIBS += -lssl \
-          -lcrypto
-
-CPPFLAGS += -I$(SRCDIR)/include/NIST
 
 
+CPPFLAGS += -I$(SRCDIR)/include/NIST \
+			-I$(SRCDIR)/include/pqm_common
+
+LDFLAGS += -L$(SRCDIR)/include/pqm_common
 # Don't forget to add all objects to the OBJ variable
 OBJ += $(TEST_OBJ)
 

@@ -27,12 +27,12 @@ KAT_FILE_TEST = "KAT_test_Serial_IO.elf"
 root_folder = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 result_folder = root_folder +"/build/result/"
 start_writefile =0
-
+count = 0
 if len(sys.argv) < 2:
   print("Usage: {0} [DEVICE]".format(sys.argv[0]))
   sys.exit(-1)
 
-dev = serial.Serial(sys.argv[1], 115200)
+dev = serial.Serial(sys.argv[1], 57600)
 
 kat_generate_folder = os.getcwd() + "/kat/kat_generate/"
 
@@ -41,6 +41,7 @@ kat_generate_folder = os.getcwd() + "/kat/kat_generate/"
 while True:
     if(state_variable == STATE_START):
         x = dev.readline()
+        print(x)
         PARAMETER =x.decode().split('-')
         PARAMETER = PARAMETER[1].strip()
         print(PARAMETER)
@@ -70,7 +71,7 @@ while True:
                 if line.startswith("count"):
                     count = line.strip()
                     file_rsp.write(count + '\n')
-                    print(count+ '\n')
+                    print(count+ ': done')
                 elif line.startswith("seed"):
                     seed = line.strip()
                     file_rsp.write(seed + '\n')
@@ -94,37 +95,36 @@ while True:
                     msg = msg.split('=')
                     msg_str = msg[1].strip()
                     msg = bytes.fromhex(msg_str)
-                    data = MSG_CODE.to_bytes(4, 'big')
+                    data = MSG_CODE.to_bytes(1, 'big')
                     dev.write(data)
                     dev.write(msg)
                 elif line.startswith("pk"):
                     # print("---Waiting read pk data from " + KAT_FILE_TEST + " file\r\n")
                     data = PK_CODE.to_bytes(4, 'big')
-                    #print(data)
                     dev.write(data)
                     pk = dev.readline()
                     file_rsp.write(pk.decode('utf-8'))
+                    print('PK: done')
                 elif line.startswith("sk"):
                    #print("---Waiting read sk data from " + KAT_FILE_TEST + " file\r\n")
                     data = SK_CODE.to_bytes(4, 'big')
-                    #print(data)
                     dev.write(data)                    
                     sk = dev.readline()
-                    file_rsp.write(sk.decode('utf-8'))    
+                    file_rsp.write(sk.decode('utf-8'))
+                    print('SK: done')    
                 elif line.startswith("sml"):
                     #print("---Waiting read sml data from " + KAT_FILE_TEST + " file\r\n")
                     data = SML_CODE.to_bytes(4, 'big')
-                    #print(data)
                     dev.write(data)                    
                     sml = dev.readline()
                     file_rsp.write(sml.decode('utf-8'))
                 elif line.startswith("sm"):
                     #print("---Waiting read sm data from " + KAT_FILE_TEST + " file\r\n")
                     data = SM_CODE.to_bytes(4, 'big')
-                    #print(data)
                     dev.write(data)                    
                     sm = dev.readline()
                     file_rsp.write(sm.decode('utf-8'))
+                    print('SM: done\n')
                 elif line.startswith("finished"):
                     data = STOP_CODE.to_bytes(4, 'big')
                     dev.write(data)

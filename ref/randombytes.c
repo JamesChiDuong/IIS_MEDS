@@ -8,10 +8,20 @@ You are solely responsible for determining the appropriateness of using and dist
 
 #include <string.h>
 #include "rng.h"
+
+#if defined(STM32F4)
+#include <aes.h>
+#else
 #include <openssl/conf.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/aes.h>
+#endif
 
+#ifdef STM32F4 
+    aes256ctx ctx256_ecb;
+    // aes256_ecb_keyexp(&ctx256_ecb, Key);
+#endif
 AES256_CTR_DRBG_struct  DRBG_ctx;
 
 void    AES256_ECB(unsigned char *key, unsigned char *ctr, unsigned char *buffer);
@@ -109,6 +119,7 @@ void handleErrors(void)
     abort();
 }
 
+#ifndef STM32F4
 // Use whatever AES implementation you have. This uses AES from openSSL library
 //    key - 256-bit AES key
 //    ctr - a 128-bit plaintext value
@@ -132,7 +143,7 @@ AES256_ECB(unsigned char *key, unsigned char *ctr, unsigned char *buffer)
     /* Clean up */
     EVP_CIPHER_CTX_free(ctx);
 }
-
+#endif
 void
 randombytes_init(unsigned char *entropy_input,
                  unsigned char *personalization_string,
@@ -148,16 +159,6 @@ randombytes_init(unsigned char *entropy_input,
   memset(DRBG_ctx.V, 0x00, 16);
   AES256_CTR_DRBG_Update(seed_material, DRBG_ctx.Key, DRBG_ctx.V);
   DRBG_ctx.reseed_counter = 1;
-
-  // printf("Key after init: ");
-  // for (int i = 0; i < 32; i++)
-  //   printf("%i, ", DRBG_ctx.Key[i]);
-  // printf("\n\n");
-
-  // printf("V after init: ");
-  // for (int i = 0; i < 16; i++)
-  //   printf("%i, ", DRBG_ctx.V[i]);
-  // printf("\n\n");
 }
 
 int
@@ -176,7 +177,12 @@ randombytes(unsigned char *x, unsigned long long xlen)
               break;
           }
       }
-      AES256_ECB(DRBG_ctx.Key, DRBG_ctx.V, block);
+#ifdef STM32F4
+        aes256_ecb_keyexp(&ctx256_ecb, DRBG_ctx.Key);      
+        aes256_ecb(block,DRBG_ctx.V, 1,&ctx256_ecb);
+#else
+        AES256_ECB(DRBG_ctx.Key, DRBG_ctx.V, block);
+#endif
       if ( xlen > 15 ) {
           memcpy(x+i, block, 16);
           i += 16;
@@ -209,7 +215,9 @@ AES256_CTR_DRBG_Update(unsigned char *provided_data,
                        unsigned char *V)
 {
     unsigned char   temp[48];
-    
+#ifdef STM32F4
+        aes256_ecb_keyexp(&ctx256_ecb, Key);
+#endif
     for (int i=0; i<3; i++) {
         //increment V
         for (int j=15; j>=0; j--) {
@@ -220,12 +228,22 @@ AES256_CTR_DRBG_Update(unsigned char *provided_data,
                 break;
             }
         }
-        
+
+#ifdef STM32F4      
+       aes256_ecb((temp+16*i), V, 1, &ctx256_ecb);
+        // memcpy((temp+16*i), V,16);
+#else
         AES256_ECB(Key, V, temp+16*i);
+#endif
+
     }
     if ( provided_data != NULL )
+    {
         for (int i=0; i<48; i++)
+        {
             temp[i] ^= provided_data[i];
+        }
+    }
     memcpy(Key, temp, 32);
     memcpy(V, temp+32, 16);
 }

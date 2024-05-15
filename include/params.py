@@ -346,17 +346,16 @@ int crypto_sign_keypair(
   );
 
 int crypto_sign(
-    unsigned char *sm, unsigned long long *smlen,
-    const unsigned char *m, unsigned long long mlen,
+    unsigned char *sm, unsigned long *smlen,
+    const unsigned char *m, unsigned long mlen,
     const unsigned char *sk
   );
 
 int crypto_sign_open(
-    unsigned char *m, unsigned long long *mlen,
-    const unsigned char *sm, unsigned long long smlen,
+    unsigned char *m, unsigned long *mlen,
+    const unsigned char *sm, unsigned long smlen,
     const unsigned char *pk
   );
-
 #endif
 """)
 

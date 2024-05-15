@@ -30,6 +30,8 @@ LDLIBS += -lhal
 export OPENCM3_DIR := $(CURDIR)/libopencm3-master
 
 libopencm3-stamp: hal/libopencm3-master.tar.gz
+	python $(ROOT_PATH)/include/params.py -p > $(ROOT_PATH)/include/params.h
+	python $(ROOT_PATH)/include/params.py -a $(PARAM_OBJ) > $(ROOT_PATH)/include/api.h
 	$(Q)tar xf $<
 	@echo "  BUILD   libopencm3"
 	$(Q)$(MAKE) -C $(OPENCM3_DIR) TARGETS=$(OPENCM3_TARGETS)
