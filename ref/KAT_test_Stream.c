@@ -168,7 +168,7 @@ int main()
         }
         else if(val_check == SK_CODE)
         {
-            printf("sk = DONE\n")
+            printf("sk = DONE\n");
             free(sk);
         }
         else if (val_check == SML_CODE)
