@@ -7,6 +7,7 @@
         "conf.h": "c",
         "evp.h": "c",
         "err.h": "c",
-        "aes.h": "c"
+        "aes.h": "c",
+        "random": "c"
     }
 }

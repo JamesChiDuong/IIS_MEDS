@@ -1,11 +1,16 @@
 #ifndef API_H
 #define API_H
 
-#define CRYPTO_SECRETKEYBYTES 2416
-#define CRYPTO_PUBLICKEYBYTES 13220
-#define CRYPTO_BYTES 12976
+#define CRYPTO_SECRETKEYBYTES 12444
+#define CRYPTO_PUBLICKEYBYTES 167717
+#define CRYPTO_BYTES 165464
 
-#define CRYPTO_ALGNAME "MEDS13220"
+#define CRYPTO_ALGNAME "MEDS167717"
+
+int crypto_sign_keypair_streaming(
+    unsigned char *pk,
+    unsigned char *sk
+  );
 
 int crypto_sign_keypair(
     unsigned char *pk,

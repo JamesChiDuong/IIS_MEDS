@@ -2,14 +2,14 @@ SHELL = sh -xv
 
 ifdef SRCDIR
 
-FILE = KAT_test_Serial_IO
+FILE = KAT_test_Stream
 VPATH = $(SRCDIR)
 
 ROOT_PATH := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 # Add your targets here
 TARGETS = $(FILE).hex
 
-PARAM_OBJ = MEDS13220
+PARAM_OBJ = MEDS167717
 
 all: params.h $(TARGETS) run
 include config.mk

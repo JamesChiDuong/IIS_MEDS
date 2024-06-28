@@ -1,15 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include "rng.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "log.h"
+
+#include "fips202.h"
+
+#include "params.h"
+
 #include "api.h"
+#include "randombytes.h"
+
+#include "meds.h"
+
+#include "seed.h"
+#include "util.h"
+#include "bitstream.h"
+
+#include "matrixmod.h"
 #include <hal.h>
 #if defined(STM32F4)
 #include <aes.h>
 #endif
 #define DATA_LENGTH 48
-
+#define COUNTER_LENGTH 100
 #define KAT_SUCCESS          0
 #define KAT_FILE_OPEN_ERROR -1
 #define KAT_DATA_ERROR      -3
@@ -26,58 +44,31 @@
 #define MAX_MARKER_LEN      50
 /*******************************/
 extern const char _elf_name[];
-
-//Function prototype
-static void fprintBstr(char *S, unsigned char *A, unsigned long long L);
-static void ReadHex(unsigned char *A, int Length, char data);
-int main()
+/*Prototype Declare*/
+static void init_entropy (unsigned char * entropy_input, unsigned int Length);
+static int do_seedgen(unsigned char * seed, unsigned int Length, unsigned int CntLenght);
+/*Prototype Defination*/
+static void init_entropy (unsigned char * entropy_input, unsigned int Length)
 {
-    char                fn_req[32], fn_rsp[32];
-    FILE                *fp_req, *fp_rsp;
-    //Declare local variable
-    unsigned char       entropy_input[DATA_LENGTH];
-    unsigned char       seed[DATA_LENGTH];
-    unsigned long       mlen, smlen, mlen1;
-    unsigned char       msg[3300];
-    unsigned char       *m, *sm, *m1;
-    int                 val = 0;
-    int                 val_check = 0;
-    int                 ret_val;
-    unsigned char       pk[CRYPTO_PUBLICKEYBYTES], sk[CRYPTO_SECRETKEYBYTES];
-    char                get_char;
-    /*For checking data*/
-    int                 done;
-    int                 count_pk = 0;
-    int                 count_seed = 0;
-    unsigned char       seed_hex[DATA_LENGTH];
-    char                get_char_data;
-    //Define function
-    hal_setup();
-
-  
-
-    hal_getchar();
-    //Init randome byte
-    /*******************************/
-    /*For implement*/
-
-    for (int i=0; i<DATA_LENGTH; i++)
+    for (int i=0; i<Length; i++)
     {
         entropy_input[i] = i;
     }
-    printf("Send data from \"%s\" - %s\n",_elf_name,CRYPTO_ALGNAME);
     randombytes_init(entropy_input, NULL, 256);
-    
-    // printf("Send data from \"%s\" - %s\n",_elf_name,CRYPTO_ALGNAME);
-    for (int i = 0; i < 100; i++)
+}
+static int do_seedgen(unsigned char * seed, unsigned int Length, unsigned int CntLenght)
+{
+    unsigned char* msg = (unsigned char*)calloc(3300, sizeof(unsigned char));
+    int mlen = 0;
+    for (int i = 0; i < CntLenght; i++)
     {
         printf("count = %d\n",i);
         randombytes(seed,DATA_LENGTH);
-        fprintBstr("seed = ", seed, DATA_LENGTH);
+        write_stream_str("seed = ", seed, DATA_LENGTH);
         mlen = 33*(i+1);
         printf("mlen = %d\n", mlen);
         randombytes(msg, mlen);
-        fprintBstr("msg = ", msg, mlen);
+        write_stream_str("msg = ", msg, mlen);
 
         printf("pk =\n");
         printf("sk =\n");
@@ -86,8 +77,51 @@ int main()
         if(i==99)
         {
             printf("finished\n");
+            free(msg);
+            return 0;
         }
         /***************************/
+    }
+    return -1;
+}
+/*Main Function*/
+
+int main()
+{
+    // char                fn_req[32], fn_rsp[32];
+    // FILE                *fp_req, *fp_rsp;
+    //Declare local variable
+    unsigned char       entropy_input[DATA_LENGTH];
+    unsigned char       seed[DATA_LENGTH];
+    unsigned long       mlen, smlen;
+    unsigned char       *m, *sm, *m1;
+    int                 val = 0;
+    int                 val_check = 0;
+    int                 ret_val;
+    unsigned char       *pk, *sk;
+    char                get_char;
+    /*For checking data*/
+    int                 done;
+    int                 count_pk = 0;
+    int                 count_seed = 0;
+    char                get_char_data;
+    //Define function
+    hal_setup();
+    hal_led_off();
+  
+
+    hal_getchar();
+    //Init randome byte
+    /*******************************/
+    init_entropy(entropy_input,DATA_LENGTH);
+
+    /*For implement*/
+    printf("Send data from \"%s\" - %s\n",_elf_name,CRYPTO_ALGNAME);
+    
+    if((ret_val = do_seedgen(seed, DATA_LENGTH,COUNTER_LENGTH))!= 0)
+    {
+        printf("crypto_seed_keypair returned <%d>\n", ret_val);
+        return KAT_CRYPTO_FAILURE;
     }
     memset(seed, 0x00, 48);
     get_char = hal_getchar();
@@ -112,8 +146,9 @@ int main()
             count_pk = count_pk + 1;
             randombytes_init(seed, NULL, 256);
             m = (unsigned char *)calloc(mlen, sizeof(unsigned char));
-            m1 = (unsigned char *)calloc(mlen+CRYPTO_BYTES, sizeof(unsigned char));
-            sm = (unsigned char *)calloc(mlen+CRYPTO_BYTES, sizeof(unsigned char));
+            hal_putchar(0);
+            // m1 = (unsigned char *)calloc(mlen+CRYPTO_BYTES, sizeof(unsigned char));
+        //     // sm = (unsigned char *)calloc(mlen+CRYPTO_BYTES, sizeof(unsigned char));
             for(int i = 0; i < mlen; i ++)
             {
                 m[i] = hal_getchar();
@@ -122,31 +157,33 @@ int main()
         
         else if(val_check == PK_CODE)
         {
-            if((ret_val = crypto_sign_keypair(pk, sk)) != 0)
+            if((ret_val = crypto_sign_keypair_streaming(pk,sk)) != 0)
             {
                 printf("crypto_sign_keypair returned <%d>\n", ret_val);
                 
                 return KAT_CRYPTO_FAILURE;
             }
             hal_led_on();
-            fprintBstr("pk = ", pk, CRYPTO_PUBLICKEYBYTES);
+            write_stream_str("pk = ", m, 10);
         }
         else if(val_check == SK_CODE)
         {
-            fprintBstr("sk = ", sk, CRYPTO_SECRETKEYBYTES);
+            printf("sk = DONE\n")
+            free(sk);
         }
         else if (val_check == SML_CODE)
         {
             
-            if ( (ret_val = crypto_sign(sm, &smlen, m, mlen, sk)) != 0) {
-                printf("crypto_sign returned <%d>\n", ret_val);
-                return KAT_CRYPTO_FAILURE;
-            }
+            // if ( (ret_val = crypto_sign(sm, &smlen, m, mlen, sk)) != 0) {
+            //     printf("crypto_sign returned <%d>\n", ret_val);
+            //     return KAT_CRYPTO_FAILURE;
+            // }
             printf("smlen = %d\n", smlen);
         }
         else if (val_check == SM_CODE)
         {
-            fprintBstr("sm = ", sm, smlen);
+            write_stream_str("sm = ", m, 10);
+            //fprintBstr("sm = ", sm, smlen);
             hal_led_off();
             // if ( (ret_val = crypto_sign_open(m1, &mlen1, sm, smlen, pk)) != 0) 
             // {
@@ -166,8 +203,8 @@ int main()
             //     return KAT_CRYPTO_FAILURE;
             // }
             free(m);
-            free(m1);
-            free(sm);
+            // free(m1);
+            // free(sm);
         }
         else if (val_check == STOP_CODE)
         {
@@ -176,29 +213,4 @@ int main()
         }
 
     }while (get_char != '\n');
-}
-
-static void fprintBstr(char *S, unsigned char *A, unsigned long long L)
-{
-    unsigned long i;
-
-    printf("%s", S);
-
-    for ( i=0; i<L; i++ )
-    {
-        printf("%02X", A[i]);
-    }
-
-    if ( L == 0 )
-    {
-        printf("00");
-    }
-    printf("\n");
-}
-static void ReadHex(unsigned char *A, int Length, char data)
-{
-    for(int i = 0; i < Length; i ++)
-    {
-        A[i] = data;
-    }
 }

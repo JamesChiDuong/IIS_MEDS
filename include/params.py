@@ -340,6 +340,11 @@ def gen_api(par_set):
 
 #define CRYPTO_ALGNAME "{par_set.name}"
 
+int crypto_sign_keypair_streaming(
+    unsigned char *pk,
+    unsigned char *sk
+  );
+
 int crypto_sign_keypair(
     unsigned char *pk,
     unsigned char *sk

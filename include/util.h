@@ -4,6 +4,7 @@
 #include "params.h"
 #include "matrixmod.h"
 
+
 void XOF(uint8_t **buf, size_t *length, const uint8_t *seed, size_t seed_len, int num);
 
 GFq_t rnd_GF(keccak_state *shake);
@@ -18,5 +19,10 @@ int solve(pmod_mat_t *A, pmod_mat_t *B_inv, pmod_mat_t *G0prime, GFq_t Amm);
 
 void pi(pmod_mat_t *Gout, pmod_mat_t *A, pmod_mat_t *B, pmod_mat_t *G);
 
+void write_stream_str(char *S, unsigned char *A, unsigned long long L);
+
+void write_stream(pmod_mat_t *Arr, unsigned long long L);
+
+void read_stream(pmod_mat_t *Arr, unsigned long long L);
 #endif
 

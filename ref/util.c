@@ -9,6 +9,41 @@
 #include "meds.h"
 #include "matrixmod.h"
 
+void read_stream(pmod_mat_t *Arr, unsigned long long L)
+{
+  char data_tmp[1];
+  for (int i=0; i<(L); i++)
+  {
+    data_tmp[0] = hal_getchar();
+    data_tmp[1] = hal_getchar();
+    Arr[i] = (data_tmp[0] << 8) | data_tmp[1];
+  }
+}
+void write_stream(pmod_mat_t *Arr, unsigned long long L)
+{
+    for (int i=0; i<L; i++)
+    {
+        printf("%04X", Arr[i]);
+    }
+     printf("\n");
+}
+void write_stream_str(char *S, unsigned char *A, unsigned long long L)
+{
+    unsigned long i;
+
+    printf("%s", S);
+
+    for ( i=0; i<L; i++ )
+    {
+        printf("%02X", A[i]);
+    }
+
+    if ( L == 0 )
+    {
+        printf("00");
+    }
+    printf("\n");
+}
 
 void XOF(uint8_t **buf, size_t *length, const uint8_t *seed, size_t seed_len, int num)
 {
@@ -152,7 +187,7 @@ int parse_hash(uint8_t *digest, int digest_len, uint8_t *h, int len_h)
   while (i < MEDS_w)
   {
     uint64_t pos = 0;
-    uint8_t buf[MEDS_t_bytes] = {0};
+    uint8_t buf[MEDS_t_bytes] = {0};                                  
 
     shake256_squeeze(buf, MEDS_t_bytes, &shake);
 
@@ -400,4 +435,3 @@ void pi(pmod_mat_t *Gout, pmod_mat_t *A, pmod_mat_t *B, pmod_mat_t *G)
     pmod_mat_mul(Gsub[i], MEDS_m, MEDS_n, Gsub[i], MEDS_m, MEDS_n, B, MEDS_n, MEDS_n);
   }
 }
-

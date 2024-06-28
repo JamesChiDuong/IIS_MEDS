@@ -22,144 +22,173 @@
 
 #define CEILING(x,y) (((x) + (y) - 1) / (y))
 
-/*Key generation*/
-int crypto_sign_keypair_streaming(unsigned char *pk, unsigned char *sk)
+
+int crypto_sign_keypair(
+    unsigned char *pk,
+    unsigned char *sk
+  )
 {
   uint8_t delta[MEDS_sec_seed_bytes];
-  /****Create delta******/
+
   randombytes(delta, MEDS_sec_seed_bytes);
+
+
+  pmod_mat_t G_data[MEDS_k * MEDS_m * MEDS_n * MEDS_s];
+  pmod_mat_t *G[MEDS_s];
+
+  for (int i = 0; i < MEDS_s; i++)
+    G[i] = &G_data[i * MEDS_k * MEDS_m * MEDS_n];
 
   uint8_t sigma_G0[MEDS_pub_seed_bytes];
   uint8_t sigma[MEDS_sec_seed_bytes];
 
-  //create sigma
   XOF((uint8_t*[]){sigma_G0, sigma},
-    (size_t[]){MEDS_pub_seed_bytes, MEDS_sec_seed_bytes},
-    delta, MEDS_sec_seed_bytes,2);
+       (size_t[]){MEDS_pub_seed_bytes, MEDS_sec_seed_bytes},
+       delta, MEDS_sec_seed_bytes,
+       2);
 
   LOG_VEC(sigma, MEDS_sec_seed_bytes);
   LOG_VEC_FMT(sigma_G0, MEDS_pub_seed_bytes, "sigma_G0");
 
-  /****Create G0******/
-  //store into Main_Buffer
-  pmod_mat_t Main_Buffer[MEDS_k * MEDS_m * MEDS_n];
-  rnd_sys_mat(Main_Buffer, MEDS_k, MEDS_m*MEDS_n, sigma_G0, MEDS_pub_seed_bytes);
-  LOG_MAT(Main_Buffer, MEDS_k, MEDS_m*MEDS_n);
-  //Send Go out
-  hal_getchar();
-  write_stream(Main_Buffer,MEDS_k * MEDS_m * MEDS_n);
-  hal_putchar(0);
 
+  rnd_sys_mat(G[0], MEDS_k, MEDS_m*MEDS_n, sigma_G0, MEDS_pub_seed_bytes);
 
-  pmod_mat_t *A_inv_data = (pmod_mat_t*)calloc(MEDS_m * MEDS_m, sizeof(pmod_mat_t));
-  pmod_mat_t *B_inv_data = (pmod_mat_t*)calloc(MEDS_m * MEDS_m, sizeof(pmod_mat_t));
+  LOG_MAT(G[0], MEDS_k, MEDS_m*MEDS_n);
 
-  /****Forall******/
+  pmod_mat_t A_inv_data[MEDS_s * MEDS_m * MEDS_m];
+  pmod_mat_t B_inv_data[MEDS_s * MEDS_m * MEDS_m];
+
+  pmod_mat_t *A_inv[MEDS_s];
+  pmod_mat_t *B_inv[MEDS_s];
+
+  for (int i = 0; i < MEDS_s; i++)
+  {
+    A_inv[i] = &A_inv_data[i * MEDS_m * MEDS_m];
+    B_inv[i] = &B_inv_data[i * MEDS_n * MEDS_n];
+  }
+
   for (int i = 1; i < MEDS_s; i++)
   {
-    pmod_mat_t *A = (pmod_mat_t*)calloc(MEDS_m * MEDS_m, sizeof(pmod_mat_t));
-    pmod_mat_t *B = (pmod_mat_t*)calloc(MEDS_n * MEDS_n, sizeof(pmod_mat_t));
-    while(1==1)
+    pmod_mat_t A[MEDS_m * MEDS_m] = {0};
+    pmod_mat_t B[MEDS_n * MEDS_n] = {0};
+
+    while (1 == 1) // redo generation for this index until success
     {
       uint8_t sigma_Ti[MEDS_sec_seed_bytes];
       uint8_t sigma_a[MEDS_sec_seed_bytes];
 
-      /****create signma_a, sigma_Ti,sigma******/
       XOF((uint8_t*[]){sigma_a, sigma_Ti, sigma},
-      (size_t[]){MEDS_sec_seed_bytes, MEDS_sec_seed_bytes, MEDS_sec_seed_bytes},
-      sigma, MEDS_sec_seed_bytes,
-      3);
+          (size_t[]){MEDS_sec_seed_bytes, MEDS_sec_seed_bytes, MEDS_sec_seed_bytes},
+          sigma, MEDS_sec_seed_bytes,
+          3);
 
-      /****create Ti******/
       pmod_mat_t Ti[MEDS_k * MEDS_k];
+
       rnd_inv_matrix(Ti, MEDS_k, MEDS_k, sigma_Ti, MEDS_sec_seed_bytes);
 
-      /****create Amm******/
       GFq_t Amm;
+
       {
         keccak_state Amm_shake;
         shake256_absorb_once(&Amm_shake, sigma_a, MEDS_sec_seed_bytes);
 
         Amm = rnd_GF(&Amm_shake);
       }
+
+
       LOG_MAT(Ti, MEDS_k, MEDS_k);
       LOG_VAL(Amm);
 
 
+      pmod_mat_t G0prime[MEDS_k * MEDS_m * MEDS_n];
 
-      /****create G0prime from G0******/
-      GFq_t *tmp = (GFq_t*)calloc(MEDS_k * MEDS_m * MEDS_n, sizeof(GFq_t));
-      pmod_mat_mul_revise(tmp, MEDS_k, MEDS_m * MEDS_n,
-      Ti, MEDS_k, MEDS_k,
-      Main_Buffer, MEDS_k, MEDS_m * MEDS_n); //Main buffer here only G0 when i = 1, with another i, mainbuffer is G, Read G0?
-      for (int c = 0; c < MEDS_m * MEDS_n; c++)
-      {
-        for (int r = 0; r < MEDS_k; r++)
-        {
-          pmod_mat_set_entry(Main_Buffer, MEDS_k,MEDS_m * MEDS_n, r, c, tmp[r*MEDS_m * MEDS_n + c]);
-        }
-      }
-      LOG_MAT(Main_Buffer, MEDS_k, MEDS_m * MEDS_n);
-      free(tmp); // deinit tmp buffer
+      pmod_mat_mul(G0prime, MEDS_k, MEDS_m * MEDS_n,
+          Ti, MEDS_k, MEDS_k,
+          G[0], MEDS_k, MEDS_m * MEDS_n);
+
+      LOG_MAT(G0prime, MEDS_k, MEDS_m * MEDS_n);
 
 
-      /****create A, B_inv_data from Gpime******/
-      if(solve(A, B_inv_data, Main_Buffer, Amm) < 0)
+      if (solve(A, B_inv[i], G0prime, Amm) < 0)
       {
         LOG("no sol");
         continue;
       }
-      if (pmod_mat_inv(B, B_inv_data, MEDS_n, MEDS_n) < 0)
+
+      if (pmod_mat_inv(B, B_inv[i], MEDS_n, MEDS_n) < 0)
       {
         LOG("no inv B");
         continue;
       }
 
-      if (pmod_mat_inv(A_inv_data, A, MEDS_m, MEDS_m) < 0)
+      if (pmod_mat_inv(A_inv[i], A, MEDS_m, MEDS_m) < 0)
       {
         LOG("no inv A_inv");
         continue;
       }
+
       LOG_MAT_FMT(A, MEDS_m, MEDS_m, "A[%i]", i);
-      LOG_MAT_FMT(A_inv_data[i], MEDS_m, MEDS_m, "A_inv[%i]", i);
+      LOG_MAT_FMT(A_inv[i], MEDS_m, MEDS_m, "A_inv[%i]", i);
       LOG_MAT_FMT(B, MEDS_n, MEDS_n, "B[%i]", i);
-      LOG_MAT_FMT(B_inv_data[i], MEDS_n, MEDS_n, "B_inv[%i]", i);
+      LOG_MAT_FMT(B_inv[i], MEDS_n, MEDS_n, "B_inv[%i]", i);
 
-      /****create G_data from G0******/
-      hal_putchar(0); //send start to reading
 
-      //Read G0 back
-      read_stream(Main_Buffer, MEDS_k * MEDS_m * MEDS_n);
-      //write_stream(Main_Buffer,MEDS_k * MEDS_m * MEDS_n);// Verify G0
+      pi(G[i], A, B, G[0]);
 
-      pi(Main_Buffer, A, B, Main_Buffer); 
-      if (pmod_mat_syst_ct(Main_Buffer, MEDS_k, MEDS_m*MEDS_n) != 0)
+
+      if (pmod_mat_syst_ct(G[i], MEDS_k, MEDS_m*MEDS_n) != 0)
       {
         LOG("redo G[%i]", i);
         continue; // Not systematic; try again for index i.
       }
-      LOG_MAT_FMT(Main_Buffer, MEDS_k, MEDS_m*MEDS_n, "G[%i]", i);
 
-      //Send A,B matrix
-      write_stream(A_inv_data, MEDS_m * MEDS_m);
+      LOG_MAT_FMT(G[i], MEDS_k, MEDS_m*MEDS_n, "G[%i]", i);
 
-      write_stream(B_inv_data, MEDS_m * MEDS_m);
-      //Send G_data
-      write_stream(Main_Buffer,MEDS_k * MEDS_m * MEDS_n);
-
-      //Read G0 back for recalculating Gprime
-      read_stream(Main_Buffer, MEDS_k * MEDS_m * MEDS_n);
-
-      hal_getchar(); //receive data for done
-      //successfull generated G[s] and send out to python scripts; break out of while loop
+      // successfull generated G[s]; break out of while loop
       break;
     }
-    free(A);
-    free(B);
   }
 
-    /*******Create sk data****/
-    sk = (unsigned char*)calloc(MEDS_SK_BYTES, sizeof(unsigned char));
+
+  // copy pk data
+  {
+    uint8_t *tmp_pk = pk;
+
+    memcpy(tmp_pk, sigma_G0, MEDS_pub_seed_bytes);
+    LOG_VEC(tmp_pk, MEDS_pub_seed_bytes, "sigma_G0 (pk)");
+    tmp_pk += MEDS_pub_seed_bytes;
+
+    bitstream_t bs;
+
+    bs_init(&bs, tmp_pk, MEDS_PK_BYTES - MEDS_pub_seed_bytes);
+
+    for (int si = 1; si < MEDS_s; si++)
+    {
+      for (int j = (MEDS_m-1)*MEDS_n; j < MEDS_m*MEDS_n; j++)
+        bs_write(&bs, G[si][MEDS_m*MEDS_n + j], GFq_bits);
+
+      for (int r = 2; r < MEDS_k; r++)
+        for (int j = MEDS_k; j < MEDS_m*MEDS_n; j++)
+          bs_write(&bs, G[si][r*MEDS_m*MEDS_n + j], GFq_bits);
+
+      bs_finalize(&bs);
+    }
+
+    LOG_VEC(tmp_pk, MEDS_PK_BYTES - MEDS_pub_seed_bytes, "G[1:] (pk)");
+    tmp_pk += MEDS_PK_BYTES - MEDS_pub_seed_bytes;
+
+    LOG_HEX(pk, MEDS_PK_BYTES);
+
+    if (MEDS_PK_BYTES != MEDS_pub_seed_bytes + bs.byte_pos + (bs.bit_pos > 0 ? 1 : 0))
+    {
+      fprintf(stderr, "ERROR: MEDS_PK_BYTES and actual pk size do not match! %i vs %i\n", MEDS_PK_BYTES, MEDS_pub_seed_bytes + bs.byte_pos+(bs.bit_pos > 0 ? 1 : 0));
+      fprintf(stderr, "%i %i\n", MEDS_pub_seed_bytes + bs.byte_pos, MEDS_pub_seed_bytes + bs.byte_pos + (bs.bit_pos > 0 ? 1 : 0));
+      return -1;
+    }
+  }
+
+  // copy sk data
+  {
     memcpy(sk, delta, MEDS_sec_seed_bytes);
     memcpy(sk + MEDS_sec_seed_bytes, sigma_G0, MEDS_pub_seed_bytes);
 
@@ -169,68 +198,23 @@ int crypto_sign_keypair_streaming(unsigned char *pk, unsigned char *sk)
 
     for (int si = 1; si < MEDS_s; si++)
     {
-      //Send start to read
-      hal_putchar(0);
-      //Read A_in_data
-      read_stream(A_inv_data,MEDS_m * MEDS_m);
       for (int j = 0; j < MEDS_m*MEDS_m; j++)
-      {
-        bs_write(&bs, A_inv_data[j], GFq_bits);
-      }
+        bs_write(&bs, A_inv[si][j], GFq_bits);
+
       bs_finalize(&bs);
-      //Finish reading
-      hal_getchar();
     }
-    
+
     for (int si = 1; si < MEDS_s; si++)
     {
-      //Send start to read
-      hal_putchar(0);
-      //Read B_in_data
-      read_stream(B_inv_data,MEDS_m * MEDS_m);
       for (int j = 0; j < MEDS_n*MEDS_n; j++)
-      {
-        bs_write(&bs, B_inv_data[j], GFq_bits);
-      }
+        bs_write(&bs, B_inv[si][j], GFq_bits);
+
       bs_finalize(&bs);
-      //Finish read data
-      hal_getchar();
     }
+
     LOG_HEX(sk, MEDS_SK_BYTES);
 
-    hal_putchar(0);
-    write_stream_str("sk = ", sk, MEDS_SK_BYTES);
-    hal_getchar();
-    //Deinit memory
-    free(A_inv_data);
-    free(B_inv_data);
-    free(sk);
-
-
-  // //Send PK
-  // pk = (uint8_t*)calloc(MEDS_m*MEDS_n*MEDS_k, sizeof(uint8_t)); //167717 byte => declare 27000 byte
-  // uint8_t *tmp_pk = pk;
-
-  // memcpy(tmp_pk, sigma_G0, MEDS_pub_seed_bytes); //copy pub_seed at first 32 bytes
-
-  // LOG_VEC(tmp_pk, MEDS_pub_seed_bytes, "sigma_G0 (pk)");
-  // tmp_pk += MEDS_pub_seed_bytes; // Increase next pub_seed byte
-
-  // bitstream_t bs;
-
-  // bs_init(&bs, tmp_pk, MEDS_PK_BYTES - MEDS_pub_seed_bytes); // Init with 167717-32 byte first => Declare (27000 - 32)*6
-  // for (int si = 1; si < MEDS_s; si++)
-  // {
-  //   for (int j = (MEDS_m-1)*MEDS_n; j < MEDS_m*MEDS_n; j++)
-  //     bs_write(&bs, Main_Buffer[MEDS_m*MEDS_n + j], GFq_bits);
-  // }
-
-  // // for (int r = 2; r < MEDS_k; r++)
-  // //   for (int j = MEDS_k; j < MEDS_m*MEDS_n; j++)
-  // //     bs_write(&bs, Main_Buffer[r*MEDS_m*MEDS_n + j], GFq_bits);
-
-  // bs_finalize(&bs);
-  // free(pk);
+  }
 
   return 0;
 }
