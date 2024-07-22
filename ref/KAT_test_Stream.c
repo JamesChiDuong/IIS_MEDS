@@ -148,7 +148,6 @@ int main()
             m = (unsigned char *)calloc(mlen, sizeof(unsigned char));
             hal_putchar(0);
             // m1 = (unsigned char *)calloc(mlen+CRYPTO_BYTES, sizeof(unsigned char));
-        //     // sm = (unsigned char *)calloc(mlen+CRYPTO_BYTES, sizeof(unsigned char));
             for(int i = 0; i < mlen; i ++)
             {
                 m[i] = hal_getchar();
@@ -164,27 +163,26 @@ int main()
                 return KAT_CRYPTO_FAILURE;
             }
             hal_led_on();
-            write_stream_str("pk = ", m, 10);
+            printf("pk = DONE\n");
         }
         else if(val_check == SK_CODE)
         {
             printf("sk = DONE\n");
-            free(sk);
         }
         else if (val_check == SML_CODE)
         {
-            
-            // if ( (ret_val = crypto_sign(sm, &smlen, m, mlen, sk)) != 0) {
-            //     printf("crypto_sign returned <%d>\n", ret_val);
-            //     return KAT_CRYPTO_FAILURE;
-            // }
+            if ( (ret_val = crypto_sign(sm, &smlen, m, mlen, sk)) != 0) {
+                printf("crypto_sign returned <%d>\n", ret_val);
+                return KAT_CRYPTO_FAILURE;
+            }
             printf("smlen = %d\n", smlen);
         }
         else if (val_check == SM_CODE)
         {
-            write_stream_str("sm = ", m, 10);
             //fprintBstr("sm = ", sm, smlen);
             hal_led_off();
+
+            printf("sm = DONE\n");
             // if ( (ret_val = crypto_sign_open(m1, &mlen1, sm, smlen, pk)) != 0) 
             // {
             //     hal_led_off();
@@ -204,7 +202,7 @@ int main()
             // }
             free(m);
             // free(m1);
-            // free(sm);
+            free(sm);
         }
         else if (val_check == STOP_CODE)
         {

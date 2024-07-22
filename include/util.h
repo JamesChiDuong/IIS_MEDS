@@ -24,5 +24,7 @@ void write_stream_str(char *S, unsigned char *A, unsigned long long L);
 void write_stream(pmod_mat_t *Arr, unsigned long long L);
 
 void read_stream(pmod_mat_t *Arr, unsigned long long L);
+
+void read_stream_str(char *Arr, unsigned long long L);
 #endif
 

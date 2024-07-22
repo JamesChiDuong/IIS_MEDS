@@ -74,7 +74,7 @@ void hal_setup()
             GPIO_PUPD_NONE, GPIO12 | GPIO13 | GPIO14 | GPIO15);
 
 
-  usart_set_baudrate(USART2, 230400);
+  usart_set_baudrate(USART2, 500000);
   usart_set_databits(USART2, 8);
   usart_set_stopbits(USART2, USART_STOPBITS_1);
   usart_set_mode(USART2, USART_MODE_TX_RX);

@@ -19,13 +19,20 @@ void read_stream(pmod_mat_t *Arr, unsigned long long L)
     Arr[i] = (data_tmp[0] << 8) | data_tmp[1];
   }
 }
+void read_stream_str(char *Arr, unsigned long long L)
+{
+  for (int i=0; i<(L); i++)
+  {
+    Arr[i] = hal_getchar();
+  }
+}
 void write_stream(pmod_mat_t *Arr, unsigned long long L)
 {
     for (int i=0; i<L; i++)
     {
-        printf("%04X", Arr[i]);
+      printf("%04X", Arr[i]);
     }
-     printf("\n");
+    printf("\n");
 }
 void write_stream_str(char *S, unsigned char *A, unsigned long long L)
 {
