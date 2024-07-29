@@ -151,6 +151,7 @@ def do_get_data_from_sig(PARAMETER,MEDS_t,FILE_RSQ,count_line,FILE_Result):
                 for byte in bytes.fromhex(sk):
                     bytes_written = dev.write(bytes([byte]))
                 dev.write('1'.encode())
+                found = False
 
     dev.read(1)
     key_gen_result[PARAMETER]["G0_data"] = dev.readline().strip().decode('utf-8')
@@ -197,7 +198,7 @@ def do_get_data_from_sig(PARAMETER,MEDS_t,FILE_RSQ,count_line,FILE_Result):
                 dev.write('1'.encode())
                 if(line_B%10 ==0):
                     print(f"Read SM data....{int(line_B*100/MEDS_t)}%----")
-                if((line_B == (MEDS_t))):
+                if((line_B == (MEDS_t+1))):
                     line_B = 0
                     found = False
     print(f"Read SM data....100%----")
@@ -256,6 +257,7 @@ if __name__ == "__main__":
                         count = line.strip()
                         file_rsp.write(count + '\n')
                         file_result_keygen.write(count + '\n')
+                        file_result_sig.write(count + '\n')
                         count_line = count_line + 1
                         print(count+ ': done')
                     elif line.startswith("seed"):

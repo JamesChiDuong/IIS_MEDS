@@ -531,12 +531,11 @@ int crypto_sign(
       bs_finalize(&bs);
     }
       //Send SM message
-      
-      write_stream_str("", sm, (bs.byte_pos));
-      
+      {
+        write_stream_str("", sm, (bs.byte_pos));
+        memset(sm,0x00,(40000));
+      }
       hal_getchar();
-
-      memset(sm,0x00,(40000));
   }
   memcpy(sm, digest, MEDS_digest_bytes);
   memcpy(sm + MEDS_digest_bytes, alpha, MEDS_st_salt_bytes);

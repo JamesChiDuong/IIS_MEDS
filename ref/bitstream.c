@@ -36,6 +36,7 @@ int bs_write(bitstream_t *bs, uint32_t data, uint32_t data_len)
     bs->bit_pos += data_len;
 
     if (bs->bit_pos > 7)
+      
     {
       bs->bit_pos = 0;
       bs->byte_pos += 1;
