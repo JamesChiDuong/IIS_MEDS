@@ -21,27 +21,35 @@ The Python script `ref/params.py` requires python-tabulate:
 ```
 
 We provide three programs:
-`test` to run at test of key generation, signing, and verification,
-`bench` for benchmarking the implementation using several rounds, and
-`KAT_test` for computing known answer tests.
+- `test` to run at test of key generation, signing, and verification,(`Will do in future`)
+- `bench` for benchmarking the implementation using several rounds, (`Will do in future`)
+- `KAT_test_Stream` for computing known answer tests. (`Have been done`)
 
 The test can be compiled and run by
 
 ```console
-   make RUN
+   make RUN  (`Will do in future`)
 ```
 
 the benchmark using
 
 ```console
-   make BENCH
+   make BENCH (`Will do in future`)
 ```
 
-and the KAT test using
+and the KAT test include 2 target: unix and stm32f4 in the file `KAT_test_Stream.c`
 
+### TARGET = unix
 ```console
-   make KAT
+   make target=unix
 ```
+### TARGET = stm32f4
+```console
+   make target=stm32f4 KAT_test_Stream.bin
+```
+When we run this command, the program will generate the `buld/result` folder which contains these data of KAT_test_Stream.
+- The file `FromPython_PQCsignKAT_MEDS167717.req` and `FromPython_PQCsignKAT_MEDS167717.rsp` contain the pk,sk and sign data from embedded board or PC.
+- The file `FromPython_Result_Keygen_MEDS167717.txt` and `FromPython_Result_Sig_MEDS167717.txt` contains the seperate data to create the pk,sk and sign data from embedded board or PC.
 
 The default parameter set is the `toy` parameter set. Another parameter set can be selected using `PARAM`, e.g.:
 
@@ -58,7 +66,7 @@ A list of available parameter sets can be obtained by:
 To run all targets, add `_ALL` to `RUN`, `BENCH`, and `KAT`, e.g.:
 
 ```console
-   make RUN_ALL
+   make RUN_ALL (`Will do in future`)
 ```
 
 When the code is compiled with `DEBUG` defined, exhaustive step-by-step debugging is produced and written to `stderr`.
@@ -68,6 +76,7 @@ The code package of the MEDS NIST submission with dedicated directories for each
 ```console
    ./NIST.sh
 ```
+
 
 ## Sage Reference Implementation
 
@@ -79,6 +88,13 @@ Install PyCryptodome by:
 ```console
    sage --pip install PyCryptodome
 ```
+
+To test the KAT_Stream data, open the `KAT_test_Serial_IO.py` file:
+```console
+   python sage-ref/KAT_test_Serial_IO.py /dev/ttyUSB0
+```
+The port`/dev/ttyUSB*` for embedded board with `TARGET=stm32f4`, `/dev/pts/*` with `TARGET=unix`
+
 
 A toy example of MEDS can be run using the following command:
 
@@ -111,6 +127,8 @@ There is a make target to easily generate and compare KAT files, e.g.:
 Tested with SageMath version 9.6.
 
 The Python code files require Python version 3.8 or newer.
+
+
 
 ## Africacrypt 2023
 

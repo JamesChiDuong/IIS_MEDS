@@ -317,7 +317,8 @@ if __name__ == "__main__":
                         sm_check = dev.readline()
                         file_rsp.write("sm = ")
                         for sm_data in sm:
-                            file_rsp.write(sm_data + "\n")
+                            if(len(sm_data) > 2): #remove 1byte from KAT file
+                                file_rsp.write(sm_data)
                         file_rsp.write("\n")
                         print('SM: done\n')
                     elif line.startswith("finished"):

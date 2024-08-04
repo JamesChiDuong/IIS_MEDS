@@ -484,16 +484,14 @@ int crypto_sign(
 
   //Initialze the SM memory
 
-  sm = (unsigned char *)calloc((40000), sizeof(unsigned char));
+  //Data_length for path data
+  uint32_t data_length = MEDS_SIG_BYTES - MEDS_w * (CEILING(MEDS_m*MEDS_m * GFq_bits, 8) + CEILING(MEDS_n*MEDS_n * GFq_bits, 8));
+  sm = (unsigned char *)calloc(((CEILING(MEDS_m*MEDS_m * GFq_bits, 8) + CEILING(MEDS_n*MEDS_n * GFq_bits, 8)) + data_length + mlen), sizeof(unsigned char));
+  
   
   //bs_init(&bs, sm, MEDS_w * (CEILING(MEDS_m*MEDS_m * GFq_bits, 8) + CEILING(MEDS_n*MEDS_n * GFq_bits, 8)));
 
-  uint8_t *path = sm + 30000;
-
-  t_hash(stree, alpha, 0, 0);
-
-  stree_to_path(stree, h, path, alpha);
-
+  
   for (int i = 0; i < MEDS_t; i++)
   {
     hal_putchar(0);
@@ -503,7 +501,8 @@ int crypto_sign(
     
     read_stream(B_tilde_data, MEDS_m * MEDS_m);
 
-    bs_init(&bs, sm, (40000)); //Total
+    bs_init(&bs, sm, ((CEILING(MEDS_m*MEDS_m * GFq_bits, 8) + CEILING(MEDS_n*MEDS_n * GFq_bits, 8)))); //Total
+
     if (h[i] > 0)
     {
       {
@@ -530,27 +529,34 @@ int crypto_sign(
       }
       bs_finalize(&bs);
     }
-      //Send SM message
       {
         write_stream_str("", sm, (bs.byte_pos));
-        memset(sm,0x00,(40000));
+        memset(sm,0x00,((CEILING(MEDS_m*MEDS_m * GFq_bits, 8) + CEILING(MEDS_n*MEDS_n * GFq_bits, 8))));
       }
       hal_getchar();
   }
-  memcpy(sm, digest, MEDS_digest_bytes);
-  memcpy(sm + MEDS_digest_bytes, alpha, MEDS_st_salt_bytes);
-  memcpy(sm + MEDS_digest_bytes + MEDS_st_salt_bytes, m, mlen);
+
+  uint8_t *path = sm + (CEILING(MEDS_m*MEDS_m * GFq_bits, 8) + CEILING(MEDS_n*MEDS_n * GFq_bits, 8)); //assign sm to path
+  
+  t_hash(stree, alpha, 0, 0);
+
+  stree_to_path(stree, h, path, alpha);// GOt data from path
+
+
+  //sm + path data
+  memcpy(sm + (CEILING(MEDS_m*MEDS_m * GFq_bits, 8) + CEILING(MEDS_n*MEDS_n * GFq_bits, 8)) + data_length - MEDS_digest_bytes - MEDS_st_salt_bytes,digest, MEDS_digest_bytes);
+  memcpy(sm + (CEILING(MEDS_m*MEDS_m * GFq_bits, 8) + CEILING(MEDS_n*MEDS_n * GFq_bits, 8))+ data_length - MEDS_st_salt_bytes, alpha, MEDS_st_salt_bytes);
+  memcpy(sm + (CEILING(MEDS_m*MEDS_m * GFq_bits, 8) + CEILING(MEDS_n*MEDS_n * GFq_bits, 8))+ data_length, m, mlen);
 
   *smlen = MEDS_SIG_BYTES + mlen;
   
   hal_putchar(0);
 
-  write_stream_str("", sm, MEDS_digest_bytes + MEDS_st_salt_bytes + mlen);
+  write_stream_str("", sm+(CEILING(MEDS_m*MEDS_m * GFq_bits, 8) + CEILING(MEDS_n*MEDS_n * GFq_bits, 8)), data_length + mlen);
       
   hal_getchar();
   LOG_HEX(sm, MEDS_SIG_BYTES + mlen);
 
-  //free(tmp_sk);
   free(sk);
   free(sm);
   return 0;
