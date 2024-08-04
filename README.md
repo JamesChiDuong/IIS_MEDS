@@ -37,19 +37,34 @@ the benchmark using
    make BENCH (`Will do in future`)
 ```
 
-and the KAT test include 2 target: unix and stm32f4 in the file `KAT_test_Stream.c`
+The KAT test include 2 version: Version 1.0: Original MED with IO serial added, Version 1.1: MED with seperated data which is sent by stream to Python script
 
-### TARGET = unix
-```console
-   make target=unix
-```
-### TARGET = stm32f4
-```console
-   make target=stm32f4 KAT_test_Stream.bin
-```
+### VERSION 1.0:
+
+The file `KAT_test_Serial_IO.c` and `KAT_test_Serial.py`
+
+When we run this command, the program will generate the `buld/result` folder which contains these data of KAT_test_Stream.
+- The file `FromPython_PQCsignKAT_MEDS167717.req` and `FromPython_PQCsignKAT_MEDS167717.rsp` contain the pk,sk and sign data from embedded board or PC.
+
+### VERSION 1.1:
+
+The file `KAT_test_Stream.c` and `KAT_test_Stream.py`
+
 When we run this command, the program will generate the `buld/result` folder which contains these data of KAT_test_Stream.
 - The file `FromPython_PQCsignKAT_MEDS167717.req` and `FromPython_PQCsignKAT_MEDS167717.rsp` contain the pk,sk and sign data from embedded board or PC.
 - The file `FromPython_Result_Keygen_MEDS167717.txt` and `FromPython_Result_Sig_MEDS167717.txt` contains the seperate data to create the pk,sk and sign data from embedded board or PC.
+
+
+Each version includes 2 target:
+
+- TARGET = unix
+```console
+   make TARGET=unix
+```
+- TARGET = stm32f4
+```console
+   make TARGET=stm32f4 KAT_test_Stream.bin
+```
 
 The default parameter set is the `toy` parameter set. Another parameter set can be selected using `PARAM`, e.g.:
 

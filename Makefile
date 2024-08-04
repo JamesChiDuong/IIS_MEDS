@@ -25,7 +25,12 @@ run:
 # additional dependencies for your the target TARGETNAME.elf file (just
 # define the dependencies, a generic rule for .elf target exists in
 # config.mk).
-TEST_SRC = ref/$(FILE).c ref/meds.c ref/util.c ref/seed.c ref/osfreq.c ref/fips202.c ref/matrixmod.c ref/bitstream.c ref/randombytes.c include/pqm_common/aes.c
+ifeq ($(FILE),KAT_test_Serial_IO)
+TEST_SRC = ref/$(FILE).c ref/meds_serial.c ref/util.c ref/seed.c ref/osfreq.c ref/fips202.c ref/matrixmod.c ref/bitstream.c ref/randombytes.c include/pqm_common/aes.c
+else
+TEST_SRC = ref/$(FILE).c ref/meds_stream.c ref/util.c ref/seed.c ref/osfreq.c ref/fips202.c ref/matrixmod.c ref/bitstream.c ref/randombytes.c include/pqm_common/aes.c
+endif
+
 ifeq ($(TARGET),stm32f4)
 #   TEST_SRC += include/pqm_common/aes.c
   TEST_SRC += 	$(SRCDIR)/include/pqm_common/aes-encrypt.S \
