@@ -243,8 +243,7 @@ def do_get_data_from_sig(PARAMETER,MEDS_t,FILE_RSQ,count_line,FILE_Result):
                     print(f"Read SM data....{int(line_B*100/MEDS_t)}%----")
                 if((line_B == (MEDS_t+1))):
                     line_B = 0
-                    found = False          
-    #print(f"Read SM data....100%----")
+                    found = False
 
     dev.read(1)
     sm = dev.readline().strip().decode('utf-8')
