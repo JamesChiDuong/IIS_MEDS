@@ -20,24 +20,18 @@ The Python script `ref/params.py` requires python-tabulate:
    pip install tabulate
 ```
 
-We provide three programs:
-- `test` to run at test of key generation, signing, and verification,(`Will do in future`)
-- `bench` for benchmarking the implementation using several rounds, (`Will do in future`)
-- `KAT_test_Stream` for computing known answer tests. (`Have been done`)
+In the original having:
+- `test` to run at test of key generation, signing, and verification.
+- `bench` for benchmarking the implementation using several rounds.
+- `KAT_test` for computing known answer tests.
 
-The test can be compiled and run by
+Because this project still can not implement into the embedded board. So, that why these file generated to implement into embedded board.
 
-```console
-   make RUN  (`Will do in future`)
-```
+Now, only file `KAT_test` is revised with two version: Version 1.0: Original MED with IO serial added, Version 1.1: MED with seperated data which is sent by stream to Python script
 
-the benchmark using
+- Version 1.0: Can implement with IO serial, but only `TARGET=unix` can implement, the `TARGET=stm32f4` can not implement due to the memory overflow.
 
-```console
-   make BENCH (`Will do in future`)
-```
-
-The KAT test include 2 version: Version 1.0: Original MED with IO serial added, Version 1.1: MED with seperated data which is sent by stream to Python script
+- Version 1.1: Can implemnt with IO serial in `TARGET=unix` and `TARGET=stm32f4`.
 
 ### VERSION 1.0:
 
@@ -54,35 +48,18 @@ When we run this command, the program will generate the `buld/result` folder whi
 - The file `FromPython_PQCsignKAT_MEDS167717.req` and `FromPython_PQCsignKAT_MEDS167717.rsp` contain the pk,sk and sign data from embedded board or PC.
 - The file `FromPython_Result_Keygen_MEDS167717.txt` and `FromPython_Result_Sig_MEDS167717.txt` contains the seperate data to create the pk,sk and sign data from embedded board or PC.
 
-
-Each version includes 2 target:
+Each version 2 target:
 
 - TARGET = unix
 ```console
    make TARGET=unix
 ```
-- TARGET = stm32f4
+- TARGET = stm32f4 (only can implement with Version 1.1)
 ```console
    make TARGET=stm32f4 KAT_test_Stream.bin
 ```
 
-The default parameter set is the `toy` parameter set. Another parameter set can be selected using `PARAM`, e.g.:
-
-```console
-   make RUN PARAM=MEDS9923
-```
-
-A list of available parameter sets can be obtained by:
-
-```console
-   ./params.py -l
-```
-
-To run all targets, add `_ALL` to `RUN`, `BENCH`, and `KAT`, e.g.:
-
-```console
-   make RUN_ALL (`Will do in future`)
-```
+The default parameter set is the `toy` parameter set. Another parameter set can be selected using `PARAM_OBJ` in make file, e.g.:
 
 When the code is compiled with `DEBUG` defined, exhaustive step-by-step debugging is produced and written to `stderr`.
 
@@ -142,7 +119,6 @@ There is a make target to easily generate and compare KAT files, e.g.:
 Tested with SageMath version 9.6.
 
 The Python code files require Python version 3.8 or newer.
-
 
 
 ## Africacrypt 2023

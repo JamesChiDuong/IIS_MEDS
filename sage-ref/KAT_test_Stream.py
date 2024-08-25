@@ -5,11 +5,13 @@ import os
 import os.path
 import time
 import subprocess
+import params
 #Declare variable
 state_variable = 0
 count_pk = 0
 root_folder = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 result_folder = root_folder +"/build/result/"
+api_folder = root_folder +"/include/api.h"
 start_writefile =0
 count = 0
 #Define File
@@ -29,8 +31,9 @@ SK_CODE = 21
 SML_CODE = 22
 SM_CODE = 23
 STOP_CODE = 24
-MEDS_S = 6
-MEDS_t = 112
+MEDS_s = 0
+MEDS_t = 0
+
 key_gen_result = dict()
 count_line = 0
 if len(sys.argv) < 2:
@@ -41,29 +44,66 @@ dev = serial.Serial(sys.argv[1], 500000) #57600
 
 kat_generate_folder = os.getcwd() + "/kat/kat_generate/"
 
+def do_check_parameter():
+    alg_name = ""
+    if os.path.exists(api_folder):
+        with open(api_folder, 'r') as file:
+            for line in file:
+                # Check if the line contains the string "toy"
+                if 'CRYPTO_ALGNAME' in line:
+                    # Extract the string inside the quotes
+                    alg_name = line.split('"')[1]
+            file.close()  
+    else:
+        print(f"File '{api_folder}' does not exist.")
+    if(alg_name == "MEDS9923"):
+        MEDS_s = params.params[0].s
+        MEDS_t = params.params[0].t
+    elif(alg_name == "MEDS13220"):
+        MEDS_s = params.params[1].s
+        MEDS_t = params.params[1].t
+    elif(alg_name == "MEDS41711"):
+        MEDS_s = params.params[2].s
+        MEDS_t = params.params[2].t
+    elif(alg_name == "MEDS55604"):
+        MEDS_s = params.params[3].s
+        MEDS_t = params.params[3].t
+    elif(alg_name == "MEDS134180"):
+        MEDS_s = params.params[4].s
+        MEDS_t = params.params[4].t
+    elif(alg_name == "MEDS167717"):
+        MEDS_s = params.params[5].s
+        MEDS_t = params.params[5].t
+    else:
+        MEDS_s = params.params[6].s
+        MEDS_t = params.params[6].t
+    
+    return MEDS_s,MEDS_t,alg_name
+
 def do_get_data_from_keygen(PARAMETER,MEDS_s,FILE,count_line):
 
     if PARAMETER not in key_gen_result:
         key_gen_result[PARAMETER] = {"G0_data": [], "G_data": [], "A_inv_data": [],"A_tilde_data": [],"B_inv_data": [],"B_tilde_data": [],"sk_data": [],"pk_data": [],"sm_data": []}
-
-    dev.read(1)
-    key_gen_result[PARAMETER]["G0_data"] = dev.readline().strip().decode('utf-8')
-    dev.write('1'.encode())
-
-    FILE.write(f"G0_data = " 
-                   + key_gen_result[PARAMETER]["G0_data"]+ '\n')
+    if((PARAMETER == "MEDS167717") or (PARAMETER == "MEDS134180")): #Read G0
+        dev.read(1)
+        key_gen_result[PARAMETER]["G0_data"] = dev.readline().strip().decode('utf-8')
+        dev.write('1'.encode())
+        FILE.write(f"G0_data = " 
+                    + key_gen_result[PARAMETER]["G0_data"]+ '\n')
 
     #Read and Send Raw Data
     for i in range(1,MEDS_s):
         dev.read(1) #receive to send data
-        for byte in bytes.fromhex(key_gen_result[PARAMETER]["G0_data"]):
-            bytes_written = dev.write(bytes([byte]))  # Write one byte at a time
+        if((PARAMETER == "MEDS167717") or (PARAMETER == "MEDS134180")) : #only MEDS167717 need to send G0 back
+            for byte in bytes.fromhex(key_gen_result[PARAMETER]["G0_data"]):
+                bytes_written = dev.write(bytes([byte]))  # Write one byte at a time
         key_gen_result[PARAMETER]["A_inv_data"] = dev.readline().strip().decode('utf-8')
         key_gen_result[PARAMETER]["B_inv_data"] = dev.readline().strip().decode('utf-8')
         key_gen_result[PARAMETER]["G_data"] = dev.readline().strip().decode('utf-8')
-        #send G0 to re-generating the Gprime
-        for byte in bytes.fromhex(key_gen_result[PARAMETER]["G0_data"]):
-            bytes_written = dev.write(bytes([byte]))  # Write one byte at a time
+        #send G0 to re-generating the G_data
+        if((PARAMETER == "MEDS167717") or (PARAMETER == "MEDS134180")):
+            for byte in bytes.fromhex(key_gen_result[PARAMETER]["G0_data"]):
+                bytes_written = dev.write(bytes([byte]))  # Write one byte at a time
         dev.write('1'.encode()) #send for done sending      
         FILE.write(f"A_inv_data {i} = " 
                    + key_gen_result[PARAMETER]["A_inv_data"]+ '\n')
@@ -153,30 +193,33 @@ def do_get_data_from_sig(PARAMETER,MEDS_t,FILE_RSQ,count_line,FILE_Result):
                 dev.write('1'.encode())
                 found = False
 
-    dev.read(1)
-    key_gen_result[PARAMETER]["G0_data"] = dev.readline().strip().decode('utf-8')
-    dev.write('1'.encode())
+    if((PARAMETER == "MEDS167717") or (PARAMETER == "MEDS134180")):
+        dev.read(1)
+        key_gen_result[PARAMETER]["G0_data"] = dev.readline().strip().decode('utf-8')
+        dev.write('1'.encode())
 
-    FILE_Result.write(f"G0_data = " 
-                   + key_gen_result[PARAMETER]["G0_data"]+ '\n')
+        FILE_Result.write(f"G0_data = " 
+                    + key_gen_result[PARAMETER]["G0_data"]+ '\n')
 
     print(f"---SM processing-----")
     for i in range(0,MEDS_t):
-        dev.read(1) #receive to send data
         #send G0 to re-generating the Gprime
+        dev.read(1) #receive to send data
         key_gen_result[PARAMETER]["A_tilde_data"] = dev.readline().strip().decode('utf-8')
         key_gen_result[PARAMETER]["B_tilde_data"] = dev.readline().strip().decode('utf-8')
-        for byte in bytes.fromhex(key_gen_result[PARAMETER]["G0_data"]):
-            bytes_written = dev.write(bytes([byte]))  # Write one byte at a time
+        if((PARAMETER == "MEDS167717") or (PARAMETER == "MEDS134180")):
+            for byte in bytes.fromhex(key_gen_result[PARAMETER]["G0_data"]):
+                bytes_written = dev.write(bytes([byte]))  # Write one byte at a time
         dev.write('1'.encode()) #send for done sending
-        if(i%10 ==0):
-            print(f"Send G0_tilde_ti....{int(i*100/MEDS_t)}%----")
+        if(i%40 ==0):
+            print(f"SM processing....{int(i*100/MEDS_t)}%----")
         FILE_Result.write(f"A_tilde_data {i} = " 
-                   + key_gen_result[PARAMETER]["A_tilde_data"]+ '\n')
+                + key_gen_result[PARAMETER]["A_tilde_data"]+ '\n')
         FILE_Result.write(f"B_tilde_data {i} = " 
-                   + key_gen_result[PARAMETER]["B_tilde_data"]+ '\n')
-    print(f"Send G0_tilde_ti....100%----")
-    
+                + key_gen_result[PARAMETER]["B_tilde_data"]+ '\n')
+    print(f"SM processing....100%----")
+
+
     FILE_Result.seek(0)
     for line in FILE_Result:
         if line.startswith(f"count = {count_line}"):
@@ -196,11 +239,11 @@ def do_get_data_from_sig(PARAMETER,MEDS_t,FILE_RSQ,count_line,FILE_Result):
                 sm = dev.readline().strip().decode('utf-8')
                 key_gen_result[PARAMETER]["sm_data"].append(sm)
                 dev.write('1'.encode())
-                if(line_B%10 ==0):
+                if(line_B%40 ==0):
                     print(f"Read SM data....{int(line_B*100/MEDS_t)}%----")
                 if((line_B == (MEDS_t+1))):
                     line_B = 0
-                    found = False
+                    found = False          
     print(f"Read SM data....100%----")
 
     dev.read(1)
@@ -211,15 +254,18 @@ def do_get_data_from_sig(PARAMETER,MEDS_t,FILE_RSQ,count_line,FILE_Result):
     sm_data = key_gen_result[PARAMETER]["sm_data"]
     key_gen_result[PARAMETER]["sm_data"] = []
     return sm_data
+
+#MAIN FUNCTION
 if __name__ == "__main__":
+    MEDS_s,MEDS_t,PARAMETER = do_check_parameter()
     while True:
         if(state_variable == STATE_START):
             dev.write('1'.encode())
             x = dev.readline()
-            print(x)
+            #print(x)
             PARAMETER =x.decode().split('-')
             PARAMETER = PARAMETER[1].strip()
-            print(PARAMETER)
+            #print(PARAMETER)
             FILE_REQ = "FromPython_PQCsignKAT_" + PARAMETER + ".req"
             FILE_RSP = "FromPython_PQCsignKAT_" + PARAMETER + ".rsp"
             FILE_DATA_Keygen = "FromPython_Result_Keygen_" + PARAMETER + ".txt"
@@ -290,7 +336,7 @@ if __name__ == "__main__":
                     elif line.startswith("pk"):
                         data = PK_CODE.to_bytes(4, 'big')
                         dev.write(data)
-                        sk,pk = do_get_data_from_keygen(PARAMETER,MEDS_S,file_result_keygen,(count_line-1))
+                        sk,pk = do_get_data_from_keygen(PARAMETER,MEDS_s,file_result_keygen,(count_line-1))
                         pk_check = dev.readline()
                         file_rsp.write("pk = ")
                         for pk_data in pk:
@@ -328,10 +374,10 @@ if __name__ == "__main__":
                         state_variable = STATE_CLOSE_RSP
                         print(finish.decode('utf-8'))
                         print("finished from Python")
-                        file_rsp.close()
-                        file_result_keygen.close()
-                        file_req.close()
         elif(state_variable == STATE_CLOSE_RSP):
+            file_rsp.close()
+            file_result_keygen.close()
+            file_req.close()
             state_variable = STATE_CHECK_DATA
         elif(state_variable == STATE_CHECK_DATA):
             state_variable = STATE_STOP

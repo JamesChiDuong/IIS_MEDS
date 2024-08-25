@@ -58,7 +58,7 @@ CFLAGS += -O0 -g3
 else ifeq ($(OPT_SIZE),1)
 CFLAGS += -Os -g3
 else
-CFLAGS += -O3 -g3
+CFLAGS += -Os -g3
 endif
 
 ifeq ($(LTO),1)

@@ -47,6 +47,7 @@ extern const char _elf_name[];
 /*Prototype Declare*/
 static void init_entropy (unsigned char * entropy_input, unsigned int Length);
 static int do_seedgen(unsigned char * seed, unsigned int Length, unsigned int CntLenght);
+
 /*Prototype Defination*/
 static void init_entropy (unsigned char * entropy_input, unsigned int Length)
 {
@@ -98,7 +99,7 @@ int main()
     int                 val = 0;
     int                 val_check = 0;
     int                 ret_val;
-    unsigned char       *pk, *sk;
+    unsigned char       *pk, *sk; 
     char                get_char;
     /*For checking data*/
     int                 done;

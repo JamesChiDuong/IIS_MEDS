@@ -27,9 +27,9 @@ void hal_setup()
   open(slavename, O_RDWR);
 
   printf("Connect to %s for serial in/out.\n", slavename);
-  printf("Press key to continue.\n");
+  printf("Start Python script to start.\n");
 
-  getchar();
+  //getchar();
 
   save_out = dup(fileno(stdout));
   save_in  = dup(fileno(stdin));

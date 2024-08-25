@@ -9,7 +9,7 @@ ROOT_PATH := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 # Add your targets here
 TARGETS = $(FILE).hex
 
-PARAM_OBJ = MEDS167717
+PARAM_OBJ = toy
 
 all: params.h $(TARGETS) run
 include config.mk
@@ -43,7 +43,8 @@ endif
 TEST_OBJ = $(call objs,$(TEST_SRC))
 $(FILE).elf: $(TEST_OBJ) libhal.a
 
-CFLAGS += -D$(PARAM_OBJ)
+CFLAGS += -D$(PARAM_OBJ) \
+		  -DUNIX
 
 
 CPPFLAGS += -I$(SRCDIR)/include/NIST \

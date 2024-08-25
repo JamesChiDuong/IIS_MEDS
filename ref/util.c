@@ -11,11 +11,11 @@
 
 void read_stream(pmod_mat_t *Arr, unsigned long long L)
 {
-  char data_tmp[1];
+  uint8_t data_tmp[1];
   for (int i=0; i<(L); i++)
   {
-    data_tmp[0] = hal_getchar();
-    data_tmp[1] = hal_getchar();
+    data_tmp[0] = (uint8_t)hal_getchar();
+    data_tmp[1] = (uint8_t)hal_getchar();
     Arr[i] = (data_tmp[0] << 8) | data_tmp[1];
   }
 }
@@ -23,7 +23,7 @@ void read_stream_str(char *Arr, unsigned long long L)
 {
   for (int i=0; i<(L); i++)
   {
-    Arr[i] = hal_getchar();
+    Arr[i] = (uint8_t*)hal_getchar();
   }
 }
 void write_stream(pmod_mat_t *Arr, unsigned long long L)
