@@ -97,6 +97,10 @@ The code package of the MEDS NIST submission with dedicated directories for each
    ./NIST.sh
 ```
 
+#### NOTE:
+
+The idea for next version implementation can be found: https://docs.google.com/presentation/d/14j2_LbWF6LDYRwHrNxNPNEqB8G5I3lrq3r7zl5Xp4aA/edit#slide=id.g3005acd7b97_0_31
+
 ## Sage Reference Implementation
 
 The Sage reference implementation in directory `sage-ref/`
