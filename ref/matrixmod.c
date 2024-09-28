@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "params.h"
-#include"matrixmod.h"
+#include "matrixmod.h"
 
 void pmod_mat_print(pmod_mat_t *M, int M_r, int M_c)
 {
@@ -14,9 +14,9 @@ void pmod_mat_fprint(FILE *stream, pmod_mat_t *M, int M_r, int M_c)
   for (int r = 0; r < M_r; r++)
   {
     fprintf(stream, "[");
-    for (int c = 0; c < M_c-1; c++)
+    for (int c = 0; c < M_c - 1; c++)
       fprintf(stream, "%4i ", pmod_mat_entry(M, M_r, M_c, r, c));
-    fprintf(stream, "%4i", pmod_mat_entry(M, M_r, M_c, r, M_c-1));
+    fprintf(stream, "%4i", pmod_mat_entry(M, M_r, M_c, r, M_c - 1));
     fprintf(stream, "]\n");
   }
 }
@@ -32,7 +32,7 @@ void pmod_mat_mul_revise(GFq_t *tmp, int C_r, int C_c, pmod_mat_t *A, int A_r, i
       for (int i = 0; i < A_r; i++)
         val = (val + (uint64_t)pmod_mat_entry(A, A_r, A_c, r, i) * (uint64_t)pmod_mat_entry(B, B_r, B_c, i, c));
 
-      tmp[r*C_c + c] = val % MEDS_p;
+      tmp[r * C_c + c] = val % MEDS_p;
     }
 
   // for (int c = 0; c < C_c; c++)
@@ -41,7 +41,7 @@ void pmod_mat_mul_revise(GFq_t *tmp, int C_r, int C_c, pmod_mat_t *A, int A_r, i
 }
 void pmod_mat_mul(pmod_mat_t *C, int C_r, int C_c, pmod_mat_t *A, int A_r, int A_c, pmod_mat_t *B, int B_r, int B_c)
 {
-  GFq_t tmp[C_r*C_c];
+  GFq_t tmp[C_r * C_c];
 
   for (int c = 0; c < C_c; c++)
     for (int r = 0; r < C_r; r++)
@@ -51,12 +51,12 @@ void pmod_mat_mul(pmod_mat_t *C, int C_r, int C_c, pmod_mat_t *A, int A_r, int A
       for (int i = 0; i < A_r; i++)
         val = (val + (uint64_t)pmod_mat_entry(A, A_r, A_c, r, i) * (uint64_t)pmod_mat_entry(B, B_r, B_c, i, c));
 
-      tmp[r*C_c + c] = val % MEDS_p;
+      tmp[r * C_c + c] = val % MEDS_p;
     }
 
   for (int c = 0; c < C_c; c++)
     for (int r = 0; r < C_r; r++)
-      pmod_mat_set_entry(C, C_r, C_c, r, c, tmp[r*C_c + c]);
+      pmod_mat_set_entry(C, C_r, C_c, r, c, tmp[r * C_c + c]);
 }
 
 int pmod_mat_syst_ct(pmod_mat_t *M, int M_r, int M_c)
@@ -64,7 +64,7 @@ int pmod_mat_syst_ct(pmod_mat_t *M, int M_r, int M_c)
   for (int r = 0; r < M_r; r++)
   {
     // swap
-    for (int r2 = r+1; r2 < M_r; r2++)
+    for (int r2 = r + 1; r2 < M_r; r2++)
     {
       uint64_t Mrr = pmod_mat_entry(M, M_r, M_c, r, r);
 
@@ -93,7 +93,7 @@ int pmod_mat_syst_ct(pmod_mat_t *M, int M_r, int M_c)
     }
 
     // eliminate
-    for (int r2 = r+1; r2 < M_r; r2++)
+    for (int r2 = r + 1; r2 < M_r; r2++)
     {
       uint64_t factor = pmod_mat_entry(M, M_r, M_c, r2, r);
 
@@ -108,7 +108,7 @@ int pmod_mat_syst_ct(pmod_mat_t *M, int M_r, int M_c)
 
         val += MEDS_p * (val < 0);
 
-        pmod_mat_set_entry(M, M_r, M_c,  r2, c, val);
+        pmod_mat_set_entry(M, M_r, M_c, r2, c, val);
       }
     }
   }
@@ -128,7 +128,7 @@ int pmod_mat_syst_ct(pmod_mat_t *M, int M_r, int M_c)
 
       val += MEDS_p * (val < 0);
 
-      pmod_mat_set_entry(M, M_r, M_c,  r2, r, val);
+      pmod_mat_set_entry(M, M_r, M_c, r2, r, val);
 
       for (int c = M_r; c < M_c; c++)
       {
@@ -141,7 +141,7 @@ int pmod_mat_syst_ct(pmod_mat_t *M, int M_r, int M_c)
 
         val += MEDS_p * (val < 0);
 
-        pmod_mat_set_entry(M, M_r, M_c,  r2, c, val);
+        pmod_mat_set_entry(M, M_r, M_c, r2, c, val);
       }
     }
 
@@ -153,16 +153,16 @@ GFq_t GF_inv(GFq_t val)
   if (MEDS_p == 8191)
   {
     // Use optimal addition chain...
-    uint64_t tmp_0  = val;
-    uint64_t tmp_1  = (tmp_0 * tmp_0) % MEDS_p;
-    uint64_t tmp_2  = (tmp_1 * tmp_0) % MEDS_p;
-    uint64_t tmp_3  = (tmp_2 * tmp_1) % MEDS_p;
-    uint64_t tmp_4  = (tmp_3 * tmp_3) % MEDS_p;
-    uint64_t tmp_5  = (tmp_4 * tmp_3) % MEDS_p;
-    uint64_t tmp_6  = (tmp_5 * tmp_5) % MEDS_p;
-    uint64_t tmp_7  = (tmp_6 * tmp_6) % MEDS_p;
-    uint64_t tmp_8  = (tmp_7 * tmp_7) % MEDS_p;
-    uint64_t tmp_9  = (tmp_8 * tmp_8) % MEDS_p;
+    uint64_t tmp_0 = val;
+    uint64_t tmp_1 = (tmp_0 * tmp_0) % MEDS_p;
+    uint64_t tmp_2 = (tmp_1 * tmp_0) % MEDS_p;
+    uint64_t tmp_3 = (tmp_2 * tmp_1) % MEDS_p;
+    uint64_t tmp_4 = (tmp_3 * tmp_3) % MEDS_p;
+    uint64_t tmp_5 = (tmp_4 * tmp_3) % MEDS_p;
+    uint64_t tmp_6 = (tmp_5 * tmp_5) % MEDS_p;
+    uint64_t tmp_7 = (tmp_6 * tmp_6) % MEDS_p;
+    uint64_t tmp_8 = (tmp_7 * tmp_7) % MEDS_p;
+    uint64_t tmp_9 = (tmp_8 * tmp_8) % MEDS_p;
     uint64_t tmp_10 = (tmp_9 * tmp_5) % MEDS_p;
     uint64_t tmp_11 = (tmp_10 * tmp_10) % MEDS_p;
     uint64_t tmp_12 = (tmp_11 * tmp_11) % MEDS_p;
@@ -182,9 +182,9 @@ GFq_t GF_inv(GFq_t val)
     while (exponent > 0)
     {
       if ((exponent & 1) != 0)
-        t = (t*(uint64_t)val) % MEDS_p;
+        t = (t * (uint64_t)val) % MEDS_p;
 
-      val = ((uint64_t)val*(uint64_t)val) % MEDS_p;
+      val = ((uint64_t)val * (uint64_t)val) % MEDS_p;
 
       exponent >>= 1;
     }
@@ -195,21 +195,21 @@ GFq_t GF_inv(GFq_t val)
 
 int pmod_mat_inv(pmod_mat_t *B, pmod_mat_t *A, int A_r, int A_c)
 {
-  pmod_mat_t M[A_r * A_c*2];
+  pmod_mat_t M[A_r * A_c * 2];
 
   for (int r = 0; r < A_r; r++)
   {
-    memcpy(&M[r * A_c*2], &A[r * A_c], A_c * sizeof(GFq_t));
+    memcpy(&M[r * A_c * 2], &A[r * A_c], A_c * sizeof(GFq_t));
 
     for (int c = 0; c < A_c; c++)
-      pmod_mat_set_entry(M, A_r, A_c*2, r, A_c + c, r==c ? 1 : 0);
+      pmod_mat_set_entry(M, A_r, A_c * 2, r, A_c + c, r == c ? 1 : 0);
   }
 
-  int ret = pmod_mat_syst_ct(M, A_r, A_c*2);
+  int ret = pmod_mat_syst_ct(M, A_r, A_c * 2);
 
   if ((ret == 0) && B)
     for (int r = 0; r < A_r; r++)
-      memcpy(&B[r * A_c], &M[r * A_c*2 + A_c], A_c * sizeof(GFq_t));
+      memcpy(&B[r * A_c], &M[r * A_c * 2 + A_c], A_c * sizeof(GFq_t));
 
   return ret;
 }

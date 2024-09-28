@@ -8,6 +8,7 @@
         "evp.h": "c",
         "err.h": "c",
         "aes.h": "c",
-        "random": "c"
+        "random": "c",
+        "stdint.h": "c"
     }
 }
