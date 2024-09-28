@@ -20,46 +20,74 @@ The Python script `ref/params.py` requires python-tabulate:
    pip install tabulate
 ```
 
-We provide three programs:
-`test` to run at test of key generation, signing, and verification,
-`bench` for benchmarking the implementation using several rounds, and
-`KAT_test` for computing known answer tests.
+In the original having:
 
-The test can be compiled and run by
+- `test` to run at test of key generation, signing, and verification.
+- `bench` for benchmarking the implementation using several rounds.
+- `KAT_test` for computing known answer tests.
+
+Because this project still can not implement into the embedded board. So, that why these file generated to implement into embedded board.
+
+Now, only file `KAT_test` is revised with two version: Version 1.0: Original MED with IO serial added, Version 1.1: MED with seperated data which is sent by stream to Python script
+
+- Version 1.0: Can implement with IO serial, but only `TARGET=unix` can implement, the `TARGET=stm32f4` can not implement due to the memory overflow.
+
+- Version 1.1: Can implemnt with IO serial in `TARGET=unix` and `TARGET=stm32f4`.
+
+### VERSION 1.0:
+
+The file `KAT_test_Serial_IO.c` and `KAT_test_Serial.py`
+
+When we run this command, the program will generate the `buld/result` folder which contains these data of KAT_test_Stream.
+
+- The file `FromPython_PQCsignKAT_MEDS167717.req` and `FromPython_PQCsignKAT_MEDS167717.rsp` contain the pk,sk and sign data from embedded board or PC.
+
+### VERSION 1.1:
+
+The file `KAT_test_Stream.c` and `KAT_test_Stream.py`
+
+When we run this command, the program will generate the `buld/result` folder which contains these data of KAT_test_Stream.
+
+- The file `FromPython_PQCsignKAT_MEDS167717.req` and `FromPython_PQCsignKAT_MEDS167717.rsp` contain the pk,sk and sign data from embedded board or PC.
+- The file `FromPython_Result_Keygen_MEDS167717.txt` and `FromPython_Result_Sig_MEDS167717.txt` contains the seperate data to create the pk,sk and sign data from embedded board or PC.
+
+Each version 2 target:
+
+- TARGET = unix
+
+Running make command
 
 ```console
-   make RUN
+   make TARGET=unix
 ```
 
-the benchmark using
+Debugging: Haven't design it. Can refer in this link: https://github.com/MrPugh/STM32-Discovery
+
+- TARGET = stm32f4 (only can implement with Version 1.1)
+
+Running make command
 
 ```console
-   make BENCH
+   make TARGET=stm32f4 KAT_test_Stream.bin
 ```
 
-and the KAT test using
+Program the device with st-flash
 
 ```console
-   make KAT
+   st-flash write build/KAT_test_Stream.bin 0x8000000
 ```
 
-The default parameter set is the `toy` parameter set. Another parameter set can be selected using `PARAM`, e.g.:
+Debugging: In one console start st-util and check which debugging port is opened, by default 4242. In another colsole, start gdb:
 
 ```console
-   make RUN PARAM=MEDS9923
+   gdb-multiarch -ex 'set remotetimeout 10' -ex 'target remote :4242' -ex load -ex 'break main' build/KAT_test_Stream.elf
 ```
 
-A list of available parameter sets can be obtained by:
+(You might need to use arm-none-eabi-gdb instead of gdb-multiarch.)
 
-```console
-   ./params.py -l
-```
+### PARAMETER:
 
-To run all targets, add `_ALL` to `RUN`, `BENCH`, and `KAT`, e.g.:
-
-```console
-   make RUN_ALL
-```
+The default parameter set is the `toy` parameter set. Another parameter set can be selected using `PARAM_OBJ` in make file, e.g.:
 
 When the code is compiled with `DEBUG` defined, exhaustive step-by-step debugging is produced and written to `stderr`.
 
@@ -68,6 +96,10 @@ The code package of the MEDS NIST submission with dedicated directories for each
 ```console
    ./NIST.sh
 ```
+
+#### NOTE:
+
+The idea for next version implementation can be found: https://docs.google.com/presentation/d/14j2_LbWF6LDYRwHrNxNPNEqB8G5I3lrq3r7zl5Xp4aA/edit#slide=id.g3005acd7b97_0_31
 
 ## Sage Reference Implementation
 
@@ -79,6 +111,14 @@ Install PyCryptodome by:
 ```console
    sage --pip install PyCryptodome
 ```
+
+To test the KAT_Stream data, open the `KAT_test_Serial_IO.py` file:
+
+```console
+   python sage-ref/KAT_test_Serial_IO.py /dev/ttyUSB0
+```
+
+The port`/dev/ttyUSB*` for embedded board with `TARGET=stm32f4`, `/dev/pts/*` with `TARGET=unix`
 
 A toy example of MEDS can be run using the following command:
 
@@ -119,9 +159,8 @@ The source code accompanying the Africacrypt 2023 paper:
 - Tung Chou, Ruben Niederhagen, Edoardo Persichetti,
   Tovohery Hajatiana Randrianarisoa, Krijn Reijnders, Simona Samardjiska,
   and Monika Trimoska:
-  *"Take your MEDS: Digital Signatures from Matrix Code Equivalence"*.
+  _"Take your MEDS: Digital Signatures from Matrix Code Equivalence"_.
   Progress in Cryptology - AfricaCrypt 2023.
   Lecture Notes in Computer Science, Springer, 2023.
 
 is in branch `Africacrypt`.
-

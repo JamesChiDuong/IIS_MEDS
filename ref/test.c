@@ -20,7 +20,7 @@ long long cpucycles(void)
 
 int main(int argc, char *argv[])
 {
-  printf("paramter set: %s\n\n", "MEDS_name");
+  printf("paramter set: %s\n\n", MEDS_name);
 
   long long time = 0;
   long long keygen_time = 0xfffffffffffffff;
