@@ -9,7 +9,7 @@ ROOT_PATH := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 # Add your targets here
 TARGETS = $(FILE).hex
 
-PARAM_OBJ = MEDS134180
+PARAM_OBJ = toy
 
 all: params.h $(TARGETS) run
 include config.mk

@@ -77,14 +77,15 @@ Program the device with st-flash
    st-flash write build/KAT_test_Stream.bin 0x8000000
 ```
 
-Debug:
-In one console start st-util and check which debugging port is opened, by default 4242.
-
-In another colsole, start gdb:
+Debugging: In one console start st-util and check which debugging port is opened, by default 4242. In another colsole, start gdb:
 
 ```console
    gdb-multiarch -ex 'set remotetimeout 10' -ex 'target remote :4242' -ex load -ex 'break main' build/KAT_test_Stream.elf
 ```
+
+(You might need to use arm-none-eabi-gdb instead of gdb-multiarch.)
+
+### PARAMETER:
 
 The default parameter set is the `toy` parameter set. Another parameter set can be selected using `PARAM_OBJ` in make file, e.g.:
 
